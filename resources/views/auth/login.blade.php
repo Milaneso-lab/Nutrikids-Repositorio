@@ -28,6 +28,33 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
             max-width: 450px;
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 40px 40px 30px;
+            text-align: center;
+        }
+
+        .login-header .logo-img {
+            max-width: 80px;
+            margin-bottom: 15px;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .login-header p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .login-body {
             padding: 40px;
         }
 
@@ -189,79 +216,68 @@
 </head>
 <body>
     <div class="login-container">
-        <div class="logo">
-            <h1>🌱 NutriKids</h1>
-            <p>Iniciar Sesión</p>
+        <div class="login-header">
+            <h1>Bienvenido</h1>
+            <p>Inicia sesión en tu cuenta</p>
         </div>
 
-        @if(session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div class="alert alert-error">
-                <ul style="margin: 0; padding-left: 20px;">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('login') }}" id="loginForm">
-            @csrf
-
-            <div class="form-group">
-                <label for="email">Correo Electrónico</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    value="{{ old('email') }}" 
-                    required 
-                    autofocus
-                    placeholder="tu@email.com"
-                >
-                @error('email')
-                    <span class="error-message">{{ $message }}</span>
-                @enderror
-            </div>
-
-            <div class="form-group">
-                <label for="password">Contraseña</label>
-                <div class="password-wrapper">
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        required
-                        placeholder="Tu contraseña"
-                    >
-                    <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
+        <div class="login-body">
+            @if(session('success'))
+                <div class="alert alert-success">
+                    {{ session('success') }}
                 </div>
-                @error('password')
-                    <span class="error-message">{{ $message }}</span>
-                @enderror
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-error">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            <div class="alert alert-error" id="alertError" style="display: none;"></div>
+
+            <form method="POST" action="{{ route('auth.login') }}" id="loginForm">
+                @csrf
+
+                <div class="form-group">
+                    <label for="email">Correo Electrónico</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        value="{{ old('email') }}" 
+                        required 
+                        autofocus
+                        placeholder="tu@email.com"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <div class="password-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="contrasena" 
+                            required
+                            placeholder="Tu contraseña"
+                        >
+                        <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    Iniciar Sesión
+                </button>
+
+                <div class="loading" id="loading">
+                    Iniciando sesión...
+                </div>
+            </form>
+
+            <div class="register-link">
+                <p>¿No tienes cuenta? <a href="{{ url('/') }}">Regístrate aquí</a></p>
             </div>
-
-            <div class="remember-me">
-                <input type="checkbox" id="remember" name="remember">
-                <label for="remember">Recordarme</label>
-            </div>
-
-            <button type="submit" class="btn-submit" id="submitBtn">
-                Iniciar Sesión
-            </button>
-
-            <div class="loading" id="loading">
-                Iniciando sesión...
-            </div>
-        </form>
-
-        <div class="register-link">
-            <p>¿No tienes una cuenta? <a href="{{ route('register') }}">Regístrate aquí</a></p>
         </div>
     </div>
 
@@ -269,7 +285,6 @@
         function togglePassword() {
             const passwordInput = document.getElementById('password');
             const toggleBtn = document.querySelector('.password-toggle');
-            
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 toggleBtn.textContent = '🙈';
@@ -280,12 +295,59 @@
         }
 
         document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
             const submitBtn = document.getElementById('submitBtn');
             const loading = document.getElementById('loading');
-            
+            const alertError = document.getElementById('alertError');
+
             submitBtn.disabled = true;
             submitBtn.textContent = 'Iniciando sesión...';
             loading.style.display = 'block';
+            alertError.style.display = 'none';
+
+            const formData = new FormData(this);
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            if (!formData.has('_token')) formData.append('_token', csrfToken);
+
+            fetch('{{ route("auth.login") }}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(function(res) {
+                if (res.headers.get('content-type') && res.headers.get('content-type').includes('application/json')) {
+                    return res.json();
+                }
+                throw new Error('Error de conexión. Recarga la página e intenta de nuevo.');
+            })
+            .then(function(data) {
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Iniciar Sesión';
+
+                if (data.success && data.redirect) {
+                    window.location.href = data.redirect;
+                } else if (!data.success) {
+                    alertError.textContent = data.message || 'Email o contraseña incorrectos.';
+                    if (data.errors && data.errors.length) {
+                        alertError.textContent += ' ' + data.errors.join(' ');
+                    }
+                    alertError.style.display = 'block';
+                }
+            })
+            .catch(function(err) {
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Iniciar Sesión';
+                alertError.textContent = err.message || 'Error de conexión. Inténtalo de nuevo.';
+                alertError.style.display = 'block';
+            });
         });
     </script>
 </body>

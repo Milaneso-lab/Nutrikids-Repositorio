@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Discusion extends Model
 {
-    protected $table = 'Discusiones';
+    protected $table = 'discusions';
     protected $primaryKey = 'id_discusion';
     
     public $timestamps = false; // Desactivar timestamps automáticos

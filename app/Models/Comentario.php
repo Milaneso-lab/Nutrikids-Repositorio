@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Comentario extends Model
 {
-    protected $table = 'Comentarios';
+    protected $table = 'comentarios';
     protected $primaryKey = 'id_comentario';
     
     public $timestamps = false; // Desactivar timestamps automáticos

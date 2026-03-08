@@ -1,10 +1,18 @@
-# Credenciales Temporales de Administrador
+# Credenciales por perfil (NutriKids)
 
-## 📋 Información de Acceso
+## 📋 Acceso por rol
 
-Para acceder al panel de administración, usa las siguientes credenciales temporales:
+Después de ejecutar `php artisan migrate:fresh --seed`, puedes usar estas cuentas para probar cada dashboard.
 
-- **Email:** `admin@temp.com`
+| Rol | Correo | Contraseña | Dashboard (después de login) |
+|-----|--------|------------|-----------------------------|
+| **Administrador** | `admin@temp.com` | `admin123` | `/admin/dashboard` |
+| **Administrador** | `admin@nutrikids.com` | `admin123` | `/admin/dashboard` |
+| **Nutriólogo** | `nutriologo@nutrikids.com` | `nutriologo123` | `/nutriologo/dashboard` |
+| **Padre** | `padre@nutrikids.com` | `padre123` | `/dashboard` |
+
+### Administrador (panel admin)
+- **Email:** `admin@temp.com` o `admin@nutrikids.com`
 - **Contraseña:** `admin123`
 
 ## 🚀 Crear/Actualizar Credenciales Temporales

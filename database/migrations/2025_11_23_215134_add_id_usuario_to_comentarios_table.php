@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('Comentarios', function (Blueprint $table) {
-            $table->unsignedInteger('id_usuario')->nullable()->after('id_comentario');
+        Schema::table('comentarios', function (Blueprint $table) {
+            $table->unsignedBigInteger('id_usuario')->nullable()->after('id_comentario');
             $table->foreign('id_usuario')->references('id_usuario')->on('Usuarios')->onDelete('cascade');
         });
     }
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('Comentarios', function (Blueprint $table) {
+        Schema::table('comentarios', function (Blueprint $table) {
             $table->dropForeign(['id_usuario']);
             $table->dropColumn('id_usuario');
         });
