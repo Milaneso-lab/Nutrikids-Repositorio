@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ContactoController;
@@ -120,3 +121,4 @@ Route::post('/logout', function () {
     request()->session()->regenerateToken();
     return redirect()->route('login')->with('success', 'Sesión cerrada correctamente');
 })->name('logout')->middleware('auth');
+

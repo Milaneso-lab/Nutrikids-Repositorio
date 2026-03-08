@@ -16,21 +16,24 @@ class UsuarioSeeder extends Seeder
                 'apellido_paterno' => 'González',
                 'apellido_materno' => 'López',
                 'email' => 'maria.gonzalez@example.com',
-                'password' => Hash::make('Password123'),
+                'contrasena' => Hash::make('Password123'),
+                'rol' => 'padre',
             ],
             [
                 'nombre' => 'Juan',
                 'apellido_paterno' => 'Pérez',
                 'apellido_materno' => 'Martínez',
                 'email' => 'juan.perez@example.com',
-                'password' => Hash::make('Password123'),
+                'contrasena' => Hash::make('Password123'),
+                'rol' => 'padre',
             ],
             [
                 'nombre' => 'Ana',
                 'apellido_paterno' => 'Rodríguez',
                 'apellido_materno' => 'Sánchez',
                 'email' => 'ana.rodriguez@example.com',
-                'password' => Hash::make('Password123'),
+                'contrasena' => Hash::make('Password123'),
+                'rol' => 'padre',
             ],
         ];
 

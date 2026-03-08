@@ -162,6 +162,13 @@
                     <div class="auth-tab active" id="loginTab">Iniciar Sesión</div>
                     <div class="auth-tab" id="registerTab">Registrarse</div>
                 </div>
+
+                @if(session('error'))
+                    <div class="session-message" style="margin-bottom: 15px; padding: 12px; background-color: #f8d7da; color: #721c24; border-radius: 5px;">{{ session('error') }}</div>
+                @endif
+                @if(session('success'))
+                    <div class="session-message" style="margin-bottom: 15px; padding: 12px; background-color: #d4edda; color: #155724; border-radius: 5px;">{{ session('success') }}</div>
+                @endif
             
             <!-- Formulario de Login -->
             <form class="auth-form active" id="loginForm">

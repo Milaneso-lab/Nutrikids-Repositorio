@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('Usuarios', function (Blueprint $table) {
-            $table->string('rol', 20)->default('padre')->after('email');
-            // Roles: 'admin', 'nutriologo', 'padre'
-        });
+        if (Schema::hasTable('Usuarios') && !Schema::hasColumn('Usuarios', 'rol')) {
+            Schema::table('Usuarios', function (Blueprint $table) {
+                $table->string('rol', 20)->default('padre')->after('email');
+            });
+        }
     }
 
     /**
@@ -22,8 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('Usuarios', function (Blueprint $table) {
-            $table->dropColumn('rol');
-        });
+        if (Schema::hasColumn('Usuarios', 'rol')) {
+            Schema::table('Usuarios', function (Blueprint $table) {
+                $table->dropColumn('rol');
+            });
+        }
     }
 };

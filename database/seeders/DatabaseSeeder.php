@@ -12,7 +12,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            AdminTemporalSeeder::class, // Crear admin temporal primero
+            AdminTemporalSeeder::class,   // admin@temp.com / admin123
+            CredencialesSeeder::class,    // admin, nutriologo y padre con roles
             UsuarioSeeder::class,
             ComentarioSeeder::class,
             DiscusionSeeder::class,

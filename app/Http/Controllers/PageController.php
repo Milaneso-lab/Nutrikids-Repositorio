@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PageController extends Controller
 {
@@ -48,6 +49,17 @@ class PageController extends Controller
 
     public function dashboard()
     {
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Debes iniciar sesión para acceder al dashboard.');
+        }
+        $user = Auth::user();
+        $rol = $user->rol ?? 'padre';
+        if ($rol === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+        if ($rol === 'nutriologo') {
+            return redirect()->route('nutriologo.dashboard');
+        }
         return view('dashboard');
     }
 
