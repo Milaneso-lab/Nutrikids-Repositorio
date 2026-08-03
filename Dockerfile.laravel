@@ -32,6 +32,8 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf \
+    && a2dismod mpm_event 2>/dev/null; a2dismod mpm_worker 2>/dev/null; \
+    a2enmod mpm_prefork \
     && a2enmod rewrite
 
 COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
