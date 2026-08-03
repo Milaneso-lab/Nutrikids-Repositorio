@@ -733,4 +733,5 @@ def registrar_usuario():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("FLASK_PORT", "5000")), debug=True)
+    _debug = os.getenv("FLASK_DEBUG", "false").lower() in ("true", "1", "yes")
+    app.run(host="0.0.0.0", port=int(os.getenv("FLASK_PORT", "5000")), debug=_debug)
