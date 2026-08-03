@@ -1,0 +1,34 @@
+{# active_page: index | obesidad | calculadora | nutriologos | comentarios | foros | conocenos | login #}
+<header class="encabezado" role="banner">
+    <div class="encabezado-container">
+        <div class="header-top">
+            <a href="{{ url_for('index') }}" class="logo-container">
+                <img src="{{ url_for('static', filename='Imagenes/nukidslofgo-Photoroom (1).png') }}" alt="NutriKids Logo" class="logo">
+            </a>
+            <nav class="menu" aria-label="Navegación principal">
+                <ul>
+                    <li><a href="{{ url_for('index') }}" class="{% if active_page == 'index' %}active{% endif %}">Inicio</a></li>
+                    <li><a href="{{ url_for('obesidad') }}" class="{% if active_page == 'obesidad' %}active{% endif %}">¿Obesidad?</a></li>
+                    <li><a href="{{ url_for('calculadora') }}" class="{% if active_page == 'calculadora' %}active{% endif %}">Cálculo de IMC</a></li>
+                    <li><a href="{{ url_for('nutriologos') }}" class="{% if active_page == 'nutriologos' %}active{% endif %}">Atención Profesional</a></li>
+                    <li><a href="{{ url_for('comentarios') }}" class="{% if active_page == 'comentarios' %}active{% endif %}">Comentarios</a></li>
+                    <li><a href="{{ url_for('foros') }}" class="{% if active_page == 'foros' %}active{% endif %}">Discusiones</a></li>
+                    <li><a href="{{ url_for('conocenos') }}" class="{% if active_page == 'conocenos' %}active{% endif %}">¿Quiénes Somos?</a></li>
+                    {% if session.get('rol') != 'padre' %}
+                    <li><a href="{{ url_for('login') }}" class="{% if active_page == 'login' %}active{% endif %}">Login</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            <div class="header-actions">
+                {% include 'partials/session_corner.html' %}
+                <div class="iconos-redes iconos-redes--compact" aria-label="Redes sociales">
+                    <a href="#" aria-label="Facebook"><img src="{{ url_for('static', filename='Imagenes/2023_Facebook_icon.svg.png') }}" alt=""></a>
+                    <a href="#" aria-label="Instagram"><img src="{{ url_for('static', filename='Imagenes/instagramlogo.png') }}" alt=""></a>
+                    <a href="#" aria-label="Twitter"><img src="{{ url_for('static', filename='Imagenes/Logo_of_Twitter.svg.png') }}" alt=""></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+<script src="{{ url_for('static', filename='js/user-messages.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/user-menu.js') }}" defer></script>

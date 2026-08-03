@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('evaluaciones', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('paciente_id')->nullable()->constrained('pacientes')->nullOnDelete();
+            $table->string('peso', 20)->nullable();
+            $table->string('talla', 20)->nullable();
+            $table->text('recomendaciones')->nullable();
             $table->timestamps();
         });
     }

@@ -2,68 +2,69 @@
 
 @section('title', 'Editar Menú - Nutriólogo')
 
-@section('page-title', 'Editar Menú')
+@section('page-title', 'Editar plan alimenticio')
 
 @section('navigation')
-    <a href="{{ route('nutriologo.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-home"></i>
-        <span>Dashboard</span>
-    </a>
-    <a href="{{ route('nutriologo.pacientes.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-child"></i>
-        <span>Pacientes</span>
-    </a>
-    <a href="{{ route('nutriologo.evaluaciones.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-clipboard-check"></i>
-        <span>Evaluaciones</span>
-    </a>
-    <a href="{{ route('nutriologo.menus.index') }}" class="flex items-center space-x-3 px-4 py-3 bg-green-500 rounded-lg text-white">
-        <i class="fas fa-utensils"></i>
-        <span>Menús</span>
-    </a>
-    <a href="{{ route('nutriologo.reportes.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-chart-bar"></i>
-        <span>Reportes</span>
-    </a>
+    @include('nutriologo.partials.navigation')
 @endsection
 
 @section('content')
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del menú</label>
-                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" value="Menú Semanal Balanceado">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Paciente</label>
-                <input type="text" readonly class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50" value="María González">
-            </div>
-        </div>
-        <p class="text-sm text-gray-600 mb-4">Edita el plan semanal según sea necesario.</p>
-        <div class="space-y-4">
-            @foreach(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] as $day)
-            <div class="border border-gray-200 rounded-lg p-4">
-                <h4 class="font-semibold text-gray-800 mb-3">{{ $day }}</h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">Desayuno</label>
-                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">Comida</label>
-                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">Cena</label>
-                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                    </div>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="xl:col-span-2">
+        <form action="{{ route('nutriologo.menus.update', $menu) }}" method="POST" class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6 border border-slate-200/80 dark:border-slate-800">
+            @csrf
+            @method('PUT')
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Nombre del plan</label>
+                    <input type="text" name="nombre" value="{{ old('nombre', $menu->nombre) }}" class="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Paciente asignado</label>
+                    <select name="paciente_id" class="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600" required>
+                        @foreach($pacientes as $paciente)
+                            <option value="{{ $paciente->id }}" @selected(old('paciente_id', $menu->paciente_id) == $paciente->id)>{{ trim($paciente->nombre . ' ' . $paciente->apellidos) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Estado</label>
+                    <select name="estado" class="w-full px-4 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600">
+                        @foreach(['activo','borrador','archivado'] as $st)
+                            <option value="{{ $st }}" @selected(old('estado', $menu->estado ?? 'activo') === $st)>{{ ucfirst($st) }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
-            @endforeach
-        </div>
-        <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
-            <a href="{{ route('nutriologo.menus.index') }}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancelar</a>
-            <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"><i class="fas fa-save mr-2"></i>Guardar cambios</button>
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2">Descripción del plan</label>
+                <textarea name="descripcion" rows="12" class="w-full px-4 py-3 border rounded-lg dark:bg-slate-800 dark:border-slate-600">{{ old('descripcion', $menu->descripcion) }}</textarea>
+            </div>
+            <div class="flex flex-wrap gap-3 justify-end border-t pt-6">
+                <a href="{{ route('nutriologo.menus.index') }}" class="px-6 py-2 border rounded-lg">Cancelar</a>
+                <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"><i class="fas fa-save mr-2"></i>Guardar</button>
+            </div>
+        </form>
+        <form action="{{ route('nutriologo.menus.duplicate', $menu) }}" method="POST" class="mt-3 text-right">@csrf<button type="submit" class="text-sm text-sky-600 hover:underline"><i class="fas fa-copy mr-1"></i>Duplicar plan</button></form>
+    </div>
+    <div>
+        @if($menu->original)
+            <div class="bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 rounded-lg p-4 mb-4 text-sm">
+                Duplicado de: <a href="{{ route('nutriologo.menus.edit', $menu->original) }}" class="text-sky-700 dark:text-sky-300 hover:underline">{{ $menu->original->nombre }}</a>
+            </div>
+        @endif
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md border p-4">
+            <h4 class="font-semibold mb-3 text-sm">Historial del paciente</h4>
+            <div class="space-y-2">
+                @forelse($historial as $h)
+                    <a href="{{ route('nutriologo.menus.edit', $h) }}" class="block p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">
+                        {{ $h->nombre }} · <x-menu-estado-badge :estado="$h->estado ?? 'activo'" />
+                    </a>
+                @empty
+                    <p class="text-xs text-slate-500">Sin otros planes para este paciente.</p>
+                @endforelse
+            </div>
         </div>
     </div>
+</div>
 @endsection

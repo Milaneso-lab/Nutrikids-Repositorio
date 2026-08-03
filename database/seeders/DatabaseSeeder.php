@@ -4,19 +4,22 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
+/**
+ * Sembrado por defecto: sólo datos de configuración (roles, permisos y las
+ * credenciales de acceso por rol). Ninguna tabla clínica ni de comunidad recibe
+ * contenido ficticio: se pueblan con información real desde los portales,
+ * la API y la app móvil.
+ *
+ * El contenido de demostración vive en DemoContenidoSeeder y debe invocarse
+ * de forma explícita en entornos locales.
+ */
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
         $this->call([
-            AdminTemporalSeeder::class,   // admin@temp.com / admin123
-            CredencialesSeeder::class,    // admin, nutriologo y padre con roles
-            UsuarioSeeder::class,
-            ComentarioSeeder::class,
-            DiscusionSeeder::class,
+            CredencialesSeeder::class,
+            RolesPermisosSeeder::class,
         ]);
     }
 }

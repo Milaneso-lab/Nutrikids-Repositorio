@@ -6,6 +6,10 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * Usuarios padre de ejemplo. Sólo desarrollo local: se invoca desde
+ * DemoContenidoSeeder, nunca desde DatabaseSeeder.
+ */
 class UsuarioSeeder extends Seeder
 {
     public function run(): void

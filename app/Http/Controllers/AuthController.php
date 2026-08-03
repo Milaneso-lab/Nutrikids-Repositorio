@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Services\Auth\LoginService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
+    public function __construct(private LoginService $loginService)
+    {
+    }
+
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -21,47 +24,46 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Errores de validación',
-                'errors' => $validator->errors()->all()
+                'errors' => $validator->errors()->all(),
             ], 400);
         }
 
         try {
-            $user = User::where('email', $request->email)->first();
+            $user = $this->loginService->attempt(
+                $request->string('email'),
+                $request->string('contrasena')
+            );
 
-            if (!$user || !Hash::check($request->contrasena, $user->contrasena)) {
+            if (! $user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Email o contraseña incorrectos.'
+                    'message' => 'Email o contraseña incorrectos.',
                 ], 401);
             }
 
-            // Iniciar sesión
-            Auth::login($user);
-
-            // Redirigir según el rol del usuario en la base de datos
-            $redirectRoute = 'index';
             $rol = $user->rol ?? 'padre';
-            
-            if ($rol === 'admin') {
-                $redirectRoute = 'admin.dashboard';
-            } elseif ($rol === 'nutriologo') {
-                $redirectRoute = 'nutriologo.dashboard';
+
+            if (Schema::hasColumn('usuarios', 'estado') && ($user->estado ?? 'activo') !== 'activo') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tu cuenta no está activa. Contacta al administrador.',
+                ], 403);
             }
 
-            $redirectUrl = route($redirectRoute);
+            $this->loginService->loginUser($user);
 
             return response()->json([
                 'success' => true,
                 'message' => '¡Inicio de sesión exitoso!',
-                'redirect' => $redirectUrl,
-                'rol' => $rol
+                'redirect' => $this->loginService->redirectUrlFor($user, $request),
+                'rol' => $rol,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error en login: ' . $e->getMessage());
+            \Log::error('Error en login: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error interno del servidor. Por favor, inténtalo más tarde.',
-                'error' => config('app.debug') ? $e->getMessage() : null
+                'message' => 'No se pudo iniciar sesión. Inténtalo de nuevo.',
             ], 500);
         }
     }

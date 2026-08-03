@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('discusions', function (Blueprint $table) {
+        Schema::create('discusiones', function (Blueprint $table) {
             $table->id('id_discusion');
             $table->string('tema', 255);
             $table->text('descripcion');
             $table->dateTime('fecha_creacion')->useCurrent();
-            $table->timestamps();
         });
     }
 
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('discusions');
+        Schema::dropIfExists('discusiones');
     }
 };

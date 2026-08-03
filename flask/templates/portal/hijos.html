@@ -1,0 +1,22 @@
+{% extends 'portal/layout.html' %}
+{% block title %}Perfiles infantiles{% endblock %}
+{% block content %}
+<div class="portal-header"><h1>Perfiles infantiles</h1></div>
+{% if ninos %}
+<table class="portal-table">
+    <thead><tr><th>Nombre</th><th>Edad</th><th>Compañero</th><th></th></tr></thead>
+    <tbody>
+    {% for n in ninos %}
+        <tr>
+            <td>{{ n.get('nombre') }} {{ n.get('apellidos', '') }}</td>
+            <td>{{ n.get('edad_anios', '—') }} años</td>
+            <td>{{ n.get('companion_emoji', '🦊') }}</td>
+            <td><a href="{{ url_for('portal_hijo_detalle', nino_id=n.get('id')) }}">Ver detalle</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="portal-card portal-empty">No hay perfiles registrados.</div>
+{% endif %}
+{% endblock %}

@@ -2,21 +2,23 @@
    NUTRIKIDS - ESTILOS MODERNOS Y ANIMADOS
    ============================================ */
 
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
 /* Variables CSS para colores y temas */
 :root {
-    /* Colores principales - Esquema moderno y vibrante */
-    --primary-color: #10B981; /* Verde esmeralda moderno */
-    --primary-dark: #059669;
-    --primary-light: #34D399;
-    --secondary-color: #3B82F6; /* Azul vibrante */
-    --accent-color: #F59E0B; /* Ámbar cálido */
-    --accent-pink: #EC4899; /* Rosa vibrante */
-    --accent-purple: #8B5CF6; /* Púrpura suave */
+    /* Paleta formal: verde esmeralda + acentos neutros (sin rosa/púrpura en UI principal) */
+    --primary-color: #0f766e;
+    --primary-dark: #0d5c56;
+    --primary-light: #14b8a6;
+    --secondary-color: #334155;
+    --accent-color: #0d9488;
+    --accent-pink: #0f766e;
+    --accent-purple: #475569;
     
-    --success-color: #10B981;
-    --error-color: #EF4444;
-    --warning-color: #F59E0B;
-    --info-color: #3B82F6;
+    --success-color: #0f766e;
+    --error-color: #dc2626;
+    --warning-color: #b45309;
+    --info-color: #0369a1;
     
     /* Colores de texto */
     --text-dark: #1F2937;
@@ -30,12 +32,13 @@
     --bg-gray-50: #F9FAFB;
     --bg-gray-100: #F3F4F6;
     
-    /* Gradientes modernos */
-    --bg-gradient-primary: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    --bg-gradient-secondary: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-    --bg-gradient-accent: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-    --bg-gradient-rainbow: linear-gradient(135deg, #10B981 0%, #3B82F6 50%, #EC4899 100%);
-    --bg-gradient-soft: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+    /* Gradientes coherentes con la marca */
+    --bg-gradient-primary: linear-gradient(145deg, #0f766e 0%, #0d5c56 100%);
+    --bg-gradient-secondary: linear-gradient(145deg, #334155 0%, #1e293b 100%);
+    --bg-gradient-accent: linear-gradient(145deg, #0f766e 0%, #115e59 100%);
+    --bg-gradient-rainbow: linear-gradient(145deg, #0f766e 0%, #0d9488 50%, #115e59 100%);
+    --bg-gradient-soft: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    --bg-gradient-green: linear-gradient(145deg, #0d5c56 0%, #0f766e 100%);
     
     /* Sombras */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -63,13 +66,15 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
     margin: 0;
     padding: 0;
     background: var(--bg-light);
     color: var(--text-dark);
-    line-height: 1.6;
+    line-height: 1.55;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* Animaciones globales */
@@ -242,7 +247,7 @@ body {
     padding: 10px 18px;
     border-radius: var(--border-radius);
     transition: var(--transition-fast);
-    font-size: 14px;
+    font-size: 15px;
     white-space: nowrap;
     position: relative;
     display: block;
@@ -301,10 +306,10 @@ body {
     opacity: 1;
 }
 
-/* Botón Login destacado */
+/* Botón Login / dashboard: mismo verde formal que el resto */
 .menu li:last-child a[href*="login.html"],
 .menu li a[href*="dashboard.html"] {
-    background: var(--bg-gradient-accent);
+    background: var(--bg-gradient-primary);
     color: var(--text-white);
     font-weight: 700;
     padding: 10px 24px;
@@ -313,8 +318,8 @@ body {
 
 .menu li:last-child a[href*="login.html"]:hover,
 .menu li a[href*="dashboard.html"]:hover {
-    background: var(--bg-gradient-accent);
-    transform: translateY(-3px) scale(1.05);
+    background: var(--bg-gradient-primary);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
 }
 

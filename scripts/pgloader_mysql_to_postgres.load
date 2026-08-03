@@ -1,0 +1,18 @@
+/* NutriKids — plantilla pgloader (MySQL → PostgreSQL)
+ *
+ * Requisitos:
+ * 1) Crear el esquema en PostgreSQL con Laravel o `sql/schema_postgres.sql`.
+ * 2) Ajustar origen MySQL (usuario, contraseña, host, nombre BD).
+ * 3) Si en MySQL la tabla de usuarios se llamaba "Usuarios" o "discusions",
+ *    renómbralas antes o usa un STAGE en pgloader; este proyecto unifica a
+ *    `usuarios` y `discusiones` en PostgreSQL.
+ *
+ * Ejemplo (Docker):
+ *   docker run --rm -it -v ./scripts:/work dimitri/pgloader:latest pgloader /work/pgloader_mysql_to_postgres.load
+ */
+
+LOAD DATABASE
+     FROM      mysql://root:CAMBIA_ME@host.docker.internal:3306/nutrikids_mysql
+     INTO      postgresql://nutrikids_user:CAMBIA_ME@host.docker.internal:5432/nutrikids
+
+ WITH data only, workers = 4, concurrency = 1;

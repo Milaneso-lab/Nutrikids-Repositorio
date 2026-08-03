@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('menus', function (Blueprint $table) {
             $table->id();
+            $table->string('nombre', 150)->nullable();
+            $table->foreignId('paciente_id')->nullable()->constrained('pacientes')->nullOnDelete();
+            $table->text('descripcion')->nullable();
             $table->timestamps();
         });
     }

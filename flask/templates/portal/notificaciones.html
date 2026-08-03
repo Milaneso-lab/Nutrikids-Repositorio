@@ -1,0 +1,16 @@
+{% extends 'portal/layout.html' %}
+{% block title %}Notificaciones{% endblock %}
+{% block content %}
+<div class="portal-header"><h1>Centro de notificaciones</h1></div>
+{% if notificaciones %}
+{% for n in notificaciones %}
+<div class="portal-card" style="margin-bottom:0.75rem;border-left:4px solid #0f766e">
+    <h3 style="margin-bottom:0.25rem">{{ n.titulo }}</h3>
+    <p>{{ n.mensaje }}</p>
+    <p style="font-size:0.8rem;color:var(--text-light);margin-top:0.5rem">{{ n.fecha }}</p>
+</div>
+{% endfor %}
+{% else %}
+<div class="portal-card portal-empty">No tienes notificaciones nuevas.</div>
+{% endif %}
+{% endblock %}

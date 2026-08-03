@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Portal familiar{% endblock %} · NutriKids</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/portal.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="{{ url_for('static', filename='js/user-messages.js') }}" defer></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+<div class="portal-shell">
+    <aside class="portal-sidebar" aria-label="Navegación del portal familiar">
+        <div class="portal-brand">
+            <img src="{{ url_for('static', filename='Imagenes/nukidslofgo-Photoroom (1).png') }}" alt="NutriKids">
+            <span>Mi familia</span>
+        </div>
+        <nav class="portal-nav">
+            <a href="{{ url_for('portal_dashboard') }}" class="{% if active_nav == 'dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Inicio</a>
+            <a href="{{ url_for('portal_hijos') }}" class="{% if active_nav == 'hijos' %}active{% endif %}"><i class="fas fa-child"></i> Perfiles infantiles</a>
+            <a href="{{ url_for('portal_citas') }}" class="{% if active_nav == 'citas' %}active{% endif %}"><i class="fas fa-calendar-check"></i> Citas</a>
+            <a href="{{ url_for('portal_habitos') }}" class="{% if active_nav == 'habitos' %}active{% endif %}"><i class="fas fa-seedling"></i> Hábitos</a>
+            <a href="{{ url_for('portal_notificaciones') }}" class="{% if active_nav == 'notificaciones' %}active{% endif %}"><i class="fas fa-bell"></i> Notificaciones</a>
+            <a href="{{ url_for('portal_cuenta') }}" class="{% if active_nav == 'cuenta' %}active{% endif %}"><i class="fas fa-user-cog"></i> Mi cuenta</a>
+            <a href="{{ url_for('index') }}"><i class="fas fa-globe"></i> Sitio público</a>
+        </nav>
+        <form action="{{ url_for('logout') }}" method="POST" style="margin-top:auto">
+            <button type="submit" class="btn btn-secondary" style="width:100%">Cerrar sesión</button>
+        </form>
+    </aside>
+    <main class="portal-main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="portal-card" style="margin-bottom:1rem;border-left:4px solid {% if category == 'error' %}#dc2626{% else %}#0f766e{% endif %}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

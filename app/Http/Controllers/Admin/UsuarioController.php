@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\RespuestasCrud;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 
 class UsuarioController extends Controller
 {
+    use RespuestasCrud;
+
     public function index()
     {
         $usuarios = User::orderBy('id_usuario', 'desc')->get();
@@ -28,7 +31,7 @@ class UsuarioController extends Controller
             'nombre' => 'required|string|min:2|max:50|regex:/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/',
             'apellido_paterno' => 'required|string|min:2|max:50|regex:/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/',
             'apellido_materno' => 'nullable|string|min:2|max:50|regex:/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/',
-            'email' => 'required|email|max:100|unique:Usuarios,email',
+            'email' => 'required|email|max:100|unique:usuarios,email',
             'contrasena' => [
                 'required',
                 'string',
@@ -47,11 +50,7 @@ class UsuarioController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Errores de validación',
-                'errors' => $validator->errors()->all()
-            ], 400);
+            return $this->respuestaValidacion($request, $validator);
         }
 
         try {
@@ -64,17 +63,14 @@ class UsuarioController extends Controller
                 'rol' => $request->rol,
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => '¡Usuario creado exitosamente!',
-                'usuario' => $user
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al crear el usuario. Por favor, inténtalo de nuevo.',
-                'error' => config('app.debug') ? $e->getMessage() : null
-            ], 500);
+            return $this->respuestaExito(
+                $request,
+                "Usuario {$user->nombre} creado correctamente.",
+                'admin.usuarios.index',
+                ['usuario' => $user]
+            );
+        } catch (\Throwable $e) {
+            return $this->respuestaExcepcion($request, $e, 'crear usuario');
         }
     }
 
@@ -92,7 +88,7 @@ class UsuarioController extends Controller
             'nombre' => 'required|string|min:2|max:50|regex:/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/',
             'apellido_paterno' => 'required|string|min:2|max:50|regex:/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/',
             'apellido_materno' => 'nullable|string|min:2|max:50|regex:/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/',
-            'email' => 'required|email|max:100|unique:Usuarios,email,' . $id . ',id_usuario',
+            'email' => 'required|email|max:100|unique:usuarios,email,' . $id . ',id_usuario',
             'contrasena' => 'nullable|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/',
             'rol' => 'required|in:admin,nutriologo,padre',
         ], [
@@ -106,11 +102,7 @@ class UsuarioController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Errores de validación',
-                'errors' => $validator->errors()->all()
-            ], 400);
+            return $this->respuestaValidacion($request, $validator);
         }
 
         try {
@@ -128,45 +120,42 @@ class UsuarioController extends Controller
 
             $usuario->update($data);
 
-            return response()->json([
-                'success' => true,
-                'message' => '¡Usuario actualizado exitosamente!',
-                'usuario' => $usuario
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al actualizar el usuario. Por favor, inténtalo de nuevo.',
-                'error' => config('app.debug') ? $e->getMessage() : null
-            ], 500);
+            return $this->respuestaExito(
+                $request,
+                "Usuario {$usuario->nombre} actualizado correctamente.",
+                'admin.usuarios.index',
+                ['usuario' => $usuario]
+            );
+        } catch (\Throwable $e) {
+            return $this->respuestaExcepcion($request, $e, 'actualizar usuario');
         }
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         try {
             $usuario = User::findOrFail($id);
-            
-            // No permitir eliminar al usuario actual
+
             if ($usuario->id_usuario == Auth::id()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No puedes eliminar tu propio usuario.'
-                ], 400);
+                $mensaje = 'No puedes eliminar tu propio usuario.';
+
+                if ($request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => $mensaje], 422);
+                }
+
+                return back()->with('error', $mensaje);
             }
 
+            $nombre = $usuario->nombre;
             $usuario->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuario eliminado exitosamente.'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al eliminar el usuario.',
-                'error' => config('app.debug') ? $e->getMessage() : null
-            ], 500);
+            return $this->respuestaExito(
+                $request,
+                "Usuario {$nombre} eliminado correctamente.",
+                'admin.usuarios.index'
+            );
+        } catch (\Throwable $e) {
+            return $this->respuestaExcepcion($request, $e, 'eliminar usuario', 'admin.usuarios.index');
         }
     }
 }

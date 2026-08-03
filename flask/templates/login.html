@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>NutriKids Padres - Login</title>
+</head>
+<body>
+    <h2>Login Padres (Flask)</h2>
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <form method="post">
+        <label>Correo</label>
+        <input type="email" name="email" required>
+        <label>Contraseña</label>
+        <input type="password" name="contrasena" required>
+        <button type="submit">Iniciar sesión</button>
+    </form>
+</body>
+</html>

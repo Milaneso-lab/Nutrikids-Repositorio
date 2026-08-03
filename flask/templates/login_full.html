@@ -1,0 +1,622 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="">
+    <title>Iniciar Sesión - NutriKids</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body.login-page {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--bg-gradient-soft);
+            min-height: 100vh;
+            display: block;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 450px;
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: var(--bg-gradient-primary, linear-gradient(135deg, #0a5c54 0%, #064e47 100%));
+            color: white;
+            padding: 40px 40px 30px;
+            text-align: center;
+        }
+
+        .login-header .logo-img {
+            max-width: 80px;
+            margin-bottom: 15px;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .login-header p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .login-body {
+            padding: 40px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: var(--primary-color);
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .remember-me input {
+            margin-right: 8px;
+            width: auto;
+        }
+
+        .remember-me label {
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--bg-gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .register-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .auth-panel.hidden {
+            display: none !important;
+        }
+
+        .register-hint {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 18px;
+            line-height: 1.45;
+        }
+
+        a.link-like {
+            color: #2e7d32;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        a.link-like:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .demo-accounts {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .demo-accounts h3 {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .demo-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .demo-btn {
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+            border: 1px solid #c8e6c9;
+            background: #f1f8f4;
+            color: #2e7d32;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .demo-btn:hover {
+            background: #e8f5e9;
+        }
+
+        .demo-box {
+            background: #e8f5e9;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 12px;
+            color: #1b5e20;
+            margin-bottom: 8px;
+            font-family: ui-monospace, Consolas, monospace;
+        }
+    </style>
+</head>
+<body class="public-site login-page">
+    {% set active_page = 'login' %}
+    {% include 'partials/public_header.html' %}
+    <main class="login-page-shell">
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Bienvenido</h1>
+            <p>Inicia sesión o regístrate (padre/madre o tutor)</p>
+        </div>
+
+        <div class="login-body">
+            <div class="alert alert-error" id="alertError" style="display: none;"></div>
+            <div class="alert alert-success" id="alertSuccess" style="display: none;"></div>
+
+            <div id="panel-login" class="auth-panel">
+            <form method="POST" action="{{ url_for('iniciar_sesion') }}" id="loginForm">
+                <div class="form-group">
+                    <label for="email">Correo electrónico</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        value=""
+                        required 
+                        autofocus
+                        placeholder="tu@email.com"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <div class="password-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="contrasena" 
+                            required
+                            placeholder="Tu contraseña"
+                        >
+                        <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    Iniciar sesión
+                </button>
+
+                <div class="loading" id="loading">
+                    Iniciando sesión...
+                </div>
+            </form>
+
+            {% if mostrar_credenciales_demo %}
+            <div class="demo-accounts">
+                <h3>Credenciales de demostración</h3>
+                <div class="demo-row">
+                    <button type="button" class="demo-btn" data-email="padre@nutrikids.com" data-pass="Padre123*">Rellenar Padre</button>
+                    <button type="button" class="demo-btn" data-email="admin@nutrikids.com" data-pass="Admin123*">Rellenar Administrador</button>
+                    <button type="button" class="demo-btn" data-email="nutriologo@nutrikids.com" data-pass="Nutri123*">Rellenar Nutriólogo</button>
+                </div>
+                <div class="demo-box">
+                    Padre: padre@nutrikids.com / padre123 → panel en Flask<br>
+                    Admin: admin@nutrikids.com / admin123 → panel Laravel<br>
+                    Nutriólogo: nutriologo@nutrikids.com / nutriologo123 → panel Laravel
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="register-link">
+                <p>¿No tienes cuenta? <a href="#" class="link-like" id="linkToRegister">Registrarse aquí</a></p>
+                <p style="margin-top: 10px; font-size: 13px;"><a href="{{ url_for('index') }}" style="color: #666;">← Volver al inicio</a></p>
+            </div>
+            </div>
+
+            <div id="panel-register" class="auth-panel hidden">
+                <p class="register-hint">Crea una cuenta como <strong>padre, madre o tutor</strong>. Administrador y nutriólogo acceden con credenciales que da el sistema.</p>
+                <form id="registerForm" novalidate>
+                    <div class="form-group">
+                        <label for="reg-nombre">Nombre</label>
+                        <input type="text" id="reg-nombre" name="nombre" required minlength="2" maxlength="50" placeholder="Nombre" pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo letras y espacios">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-apellido-paterno">Apellido paterno</label>
+                        <input type="text" id="reg-apellido-paterno" name="apellido_paterno" required minlength="2" maxlength="50" placeholder="Apellido paterno" pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo letras y espacios">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-apellido-materno">Apellido materno (opcional)</label>
+                        <input type="text" id="reg-apellido-materno" name="apellido_materno" maxlength="50" placeholder="Opcional" pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]*" title="Solo letras y espacios">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Correo electrónico</label>
+                        <input type="email" id="reg-email" name="email" required placeholder="tu@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-contrasena">Contraseña</label>
+                        <input type="password" id="reg-contrasena" name="contrasena" required minlength="8" placeholder="Mín. 8 caracteres, mayúscula, minúscula y número" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-contrasena2">Confirmar contraseña</label>
+                        <input type="password" id="reg-contrasena2" name="contrasena2" required minlength="8" placeholder="Repite la contraseña" autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn-submit" id="registerSubmitBtn">Crear cuenta</button>
+                </form>
+                <div class="loading" id="registerLoading" style="display: none;">Registrando…</div>
+                <div class="register-link" style="margin-top: 16px;">
+                    <p><a href="#" class="link-like" id="linkToLogin">¿Ya tienes cuenta? Iniciar sesión</a></p>
+                    <p style="margin-top: 10px; font-size: 13px;"><a href="{{ url_for('index') }}" style="color: #666;">← Volver al inicio</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    </main>
+
+    <script>
+        var LARAVEL_INICIAR_SESION = {{ (laravel_public_url + '/IniciarSesion')|tojson }};
+        var FLASK_INICIAR_SESION = {{ url_for('iniciar_sesion')|tojson }};
+        var FLASK_REGISTRAR = {{ url_for('registrar_usuario')|tojson }};
+
+        function hideAlerts() {
+            document.getElementById('alertError').style.display = 'none';
+            document.getElementById('alertSuccess').style.display = 'none';
+        }
+
+        function showPanel(which) {
+            document.getElementById('panel-login').classList.toggle('hidden', which !== 'login');
+            document.getElementById('panel-register').classList.toggle('hidden', which !== 'register');
+            hideAlerts();
+        }
+
+        document.getElementById('linkToRegister').addEventListener('click', function(e) {
+            e.preventDefault();
+            showPanel('register');
+        });
+        document.getElementById('linkToLogin').addEventListener('click', function(e) {
+            e.preventDefault();
+            showPanel('login');
+        });
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = document.querySelector('.password-toggle');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+
+        document.querySelectorAll('.demo-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.getElementById('email').value = btn.getAttribute('data-email') || '';
+                document.getElementById('password').value = btn.getAttribute('data-pass') || '';
+            });
+        });
+
+        function postLaravelIniciarSesion(url, email, contrasena) {
+            return fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email: email, contrasena: contrasena }),
+                credentials: 'include'
+            }).then(function(r) {
+                return r.json().then(function(data2) { return { ok: r.ok, data: data2 }; });
+            });
+        }
+
+        function runLoginFlow(email, contrasena, submitBtn, loading, alertError) {
+            var payload = { email: email, contrasena: contrasena };
+
+            return fetch(FLASK_INICIAR_SESION, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload),
+                credentials: 'same-origin'
+            })
+            .then(function(res) {
+                if (res.headers.get('content-type') && res.headers.get('content-type').includes('application/json')) {
+                    return res.json().then(function(data) { return { ok: res.ok, data: data }; });
+                }
+                throw new Error('No se pudo completar la acción. Inténtalo de nuevo.');
+            })
+            .then(function(result) {
+                var data = result.data || {};
+
+                if (result.ok && data.success && !data.laravel_login_required) {
+                    if ((data.rol || '').toString().toLowerCase() === 'padre') {
+                        window.location.href = data.redirect || '/portal';
+                        return null;
+                    }
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                        return null;
+                    }
+                }
+
+                if (result.ok && data.success && data.laravel_login_required && data.laravel_iniciar_sesion_url) {
+                    return postLaravelIniciarSesion(data.laravel_iniciar_sesion_url, email, contrasena);
+                }
+
+                if (!result.ok || !data.success) {
+                    return postLaravelIniciarSesion(LARAVEL_INICIAR_SESION, email, contrasena);
+                }
+
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Iniciar sesión';
+                alertError.textContent = data.message || 'No se pudo completar el inicio de sesión.';
+                alertError.style.display = 'block';
+                return null;
+            })
+            .then(function(second) {
+                if (!second) return;
+                var data2 = second.data;
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Iniciar sesión';
+                if (second.ok && data2.success && data2.redirect) {
+                    if ((data2.rol || '').toString().toLowerCase() === 'padre') {
+                        window.location.href = data2.redirect.indexOf('/portal') >= 0 ? data2.redirect : '/portal';
+                        return;
+                    }
+                    window.location.href = data2.redirect;
+                } else {
+                    alertError.textContent = (data2 && data2.message) ? data2.message : 'Email o contraseña incorrectos.';
+                    alertError.style.display = 'block';
+                }
+            })
+            .catch(function(err) {
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Iniciar sesión';
+                alertError.textContent = (window.NutriKidsMessages ? NutriKidsMessages.fromCatch(err) : 'No se pudo completar la acción. Inténtalo de nuevo.');
+                alertError.style.display = 'block';
+            });
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const alertError = document.getElementById('alertError');
+            const email = document.getElementById('email').value.trim();
+            const contrasena = document.getElementById('password').value;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Iniciando sesión...';
+            loading.style.display = 'block';
+            hideAlerts();
+
+            runLoginFlow(email, contrasena, submitBtn, loading, alertError);
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var alertError = document.getElementById('alertError');
+            var alertSuccess = document.getElementById('alertSuccess');
+            var btn = document.getElementById('registerSubmitBtn');
+            var loading = document.getElementById('registerLoading');
+            var c1 = document.getElementById('reg-contrasena').value;
+            var c2 = document.getElementById('reg-contrasena2').value;
+            hideAlerts();
+
+            if (c1 !== c2) {
+                alertError.textContent = 'Las contraseñas no coinciden.';
+                alertError.style.display = 'block';
+                return;
+            }
+            if (c1.length < 8 || !/[a-z]/.test(c1) || !/[A-Z]/.test(c1) || !/\d/.test(c1)) {
+                alertError.textContent = 'La contraseña debe tener al menos 8 caracteres e incluir mayúscula, minúscula y número.';
+                alertError.style.display = 'block';
+                return;
+            }
+
+            var materno = document.getElementById('reg-apellido-materno').value.trim();
+            var payload = {
+                nombre: document.getElementById('reg-nombre').value.trim(),
+                apellido_paterno: document.getElementById('reg-apellido-paterno').value.trim(),
+                apellido_materno: materno || null,
+                email: document.getElementById('reg-email').value.trim(),
+                contrasena: c1
+            };
+
+            btn.disabled = true;
+            loading.style.display = 'block';
+
+            fetch(FLASK_REGISTRAR, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload),
+                credentials: 'same-origin'
+            })
+            .then(function(res) {
+                return res.json().then(function(data) { return { ok: res.ok, data: data }; });
+            })
+            .then(function(result) {
+                loading.style.display = 'none';
+                btn.disabled = false;
+                if (!result.ok || !result.data.success) {
+                    var m = (result.data && result.data.message) ? result.data.message : 'No se pudo registrar.';
+                    alertError.textContent = m;
+                    alertError.style.display = 'block';
+                    return;
+                }
+                alertSuccess.textContent = '¡Cuenta creada! Entrando con tu sesión…';
+                alertSuccess.style.display = 'block';
+                document.getElementById('email').value = payload.email;
+                document.getElementById('password').value = payload.contrasena;
+                showPanel('login');
+                var submitBtn = document.getElementById('submitBtn');
+                var loginLoading = document.getElementById('loading');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Iniciando sesión...';
+                loginLoading.style.display = 'block';
+                runLoginFlow(payload.email, payload.contrasena, submitBtn, loginLoading, alertError);
+            })
+            .catch(function(err) {
+                loading.style.display = 'none';
+                btn.disabled = false;
+                alertError.textContent = (window.NutriKidsMessages ? NutriKidsMessages.fromCatch(err) : 'No se pudo completar el registro. Revisa los datos e inténtalo de nuevo.');
+                alertError.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
+

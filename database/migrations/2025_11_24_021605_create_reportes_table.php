@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('reportes', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('paciente_id')->nullable()->constrained('pacientes')->nullOnDelete();
+            $table->string('titulo', 150)->nullable();
+            $table->text('contenido')->nullable();
             $table->timestamps();
         });
     }

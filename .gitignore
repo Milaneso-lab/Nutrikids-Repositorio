@@ -9,7 +9,9 @@
 /.idea
 /.nova
 /.phpunit.cache
-/.vscode
+/.vscode/*
+!/.vscode/settings.json
+!/.vscode/extensions.json
 /.zed
 /auth.json
 /node_modules
@@ -22,3 +24,18 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Respaldos de base de datos: contienen datos clínicos reales, nunca se versionan
+/backups/
+*.dump
+*.sql.gz
+
+# NutriKids — móvil y Python
+NutriKidsMovil/node_modules/
+NutriKidsMovil/.expo/
+NutriKidsMovil/.expo-demo-build/
+NutriKidsMovil/dist/
+fastapi/**/__pycache__/
+fastapi/.pytest_cache/
+**/*.pyc
+

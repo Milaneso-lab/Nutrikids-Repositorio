@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "NutriKids PostgreSQL",
+      "Group": "NutriKids",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "nutrikids",
+      "Username": "nutrikids_user",
+      "SSLMode": "prefer",
+      "Comment": "Base de datos oficial NutriKids. La contrasena se solicita en el primer connect (no se almacena en este archivo)."
+    }
+  }
+}

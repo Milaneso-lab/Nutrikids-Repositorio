@@ -1,0 +1,191 @@
+# Docker Compose — NutriKids (08_Docker.md, 05_Seguridad.md)
+# Secretos vía .env (no hardcodear en este archivo)
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: nutrikids_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nutrikids}
+      POSTGRES_USER: ${POSTGRES_USER:-nutrikids_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definir POSTGRES_PASSWORD en .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nutrikids_user} -d ${POSTGRES_DB:-nutrikids}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  pgadmin:
+    image: dpage/pgadmin4:8.14
+    container_name: nutrikids_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@nutrikids.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Definir PGADMIN_DEFAULT_PASSWORD en .env}
+      PGADMIN_LISTEN_PORT: "80"
+      PGADMIN_CONFIG_SERVER_MODE: "True"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_DISABLE_POSTFIX: "True"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/misc/ping || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: nutrikids_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  laravel:
+    build:
+      context: .
+      dockerfile: Dockerfile.laravel
+    container_name: nutrikids_laravel
+    ports:
+      - "8080:80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1/up > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 120s
+    env_file:
+      - .env
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: ${POSTGRES_DB:-nutrikids}
+      DB_USERNAME: ${POSTGRES_USER:-nutrikids_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_URL: http://localhost:8080
+      NUTRIKIDS_API_BASE_URL: http://fastapi:8000
+      FLASK_PUBLIC_URL: http://localhost:5000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./app:/var/www/html/app
+      - ./routes:/var/www/html/routes
+      - ./resources:/var/www/html/resources
+      - ./config:/var/www/html/config
+      - ./database:/var/www/html/database
+      - ./public:/var/www/html/public
+      - ./bootstrap:/var/www/html/bootstrap
+      - ./artisan:/var/www/html/artisan
+      - ./composer.json:/var/www/html/composer.json
+      - ./composer.lock:/var/www/html/composer.lock
+    networks:
+      - app-network
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.fastapi
+    container_name: nutrikids_fastapi
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request as u; u.urlopen('http://127.0.0.1:8000/health').read()\"",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    env_file:
+      - .env
+      - fastapi/.env
+    environment:
+      NUTRIKIDS_DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-nutrikids_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-nutrikids}
+      NUTRIKIDS_REDIS_URL: redis://redis:6379/0
+      NUTRIKIDS_SKIP_CREATE_ALL: "1"
+      NUTRIKIDS_ACCESS_TOKEN_MINUTES: "15"
+      NUTRIKIDS_CORS_ORIGINS: "http://localhost:5000,http://127.0.0.1:5000,http://localhost:8080,http://127.0.0.1:8080,http://localhost:8081,http://127.0.0.1:8081,http://localhost:19006,http://127.0.0.1:19006"
+      NUTRIKIDS_MAIL_MAILER: "${NUTRIKIDS_MAIL_MAILER:-log}"
+      NUTRIKIDS_MAIL_SMTP_HOST: "${NUTRIKIDS_MAIL_SMTP_HOST:-}"
+      NUTRIKIDS_MAIL_SMTP_PORT: "${NUTRIKIDS_MAIL_SMTP_PORT:-587}"
+      NUTRIKIDS_MAIL_SMTP_USER: "${NUTRIKIDS_MAIL_SMTP_USER:-}"
+      NUTRIKIDS_MAIL_SMTP_PASSWORD: "${NUTRIKIDS_MAIL_SMTP_PASSWORD:-}"
+      NUTRIKIDS_MAIL_FROM_ADDRESS: "${NUTRIKIDS_MAIL_FROM_ADDRESS:-noreply@nutrikids.com}"
+      NUTRIKIDS_MAIL_FROM_NAME: "${NUTRIKIDS_MAIL_FROM_NAME:-NutriKids}"
+      NUTRIKIDS_MAIL_USE_TLS: "${NUTRIKIDS_MAIL_USE_TLS:-true}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./fastapi:/app
+    networks:
+      - app-network
+
+  flask:
+    build:
+      context: .
+      dockerfile: Dockerfile.flask
+    container_name: nutrikids_flask
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request as u; u.urlopen('http://127.0.0.1:5000/health').read()\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    env_file:
+      - .env
+    environment:
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:?Definir FLASK_SECRET_KEY en .env}
+      NUTRIKIDS_API_BASE_URL: http://fastapi:8000
+      LARAVEL_PUBLIC_URL: http://localhost:8080
+      FLASK_PORT: "5000"
+    depends_on:
+      fastapi:
+        condition: service_healthy
+    volumes:
+      - ./flask:/app
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:
+
+networks:
+  app-network:
+    driver: bridge

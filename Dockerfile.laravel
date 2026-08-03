@@ -1,0 +1,44 @@
+# NutriKids — Laravel (PHP 8.2 + Apache) para administradores y nutriólogos
+FROM php:8.2-apache
+
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    postgresql-client \
+    libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql pgsql zip mbstring exif pcntl bcmath \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+COPY . .
+
+RUN rm -rf vendor \
+    && composer install --no-dev --optimize-autoloader --no-interaction --no-scripts \
+    && composer dump-autoload --optimize --no-interaction
+
+# Caché de descubrimiento del host suele referenciar paquetes require-dev (pail, sail).
+RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
+
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf \
+    && a2enmod rewrite
+
+COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
+
+COPY docker/entrypoint-laravel.sh /usr/local/bin/entrypoint-laravel.sh
+RUN chmod +x /usr/local/bin/entrypoint-laravel.sh
+
+EXPOSE 80
+
+ENTRYPOINT ["/usr/local/bin/entrypoint-laravel.sh"]

@@ -6,55 +6,52 @@ use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * Administrador de emergencia para recuperar el acceso al panel.
+ *
+ * No forma parte de DatabaseSeeder: las credenciales normales las provee
+ * CredencialesSeeder. Este seeder existe sólo como vía de recuperación y exige
+ * ADMIN_TEMPORAL_EMAIL y ADMIN_TEMPORAL_PASSWORD en el entorno.
+ *
+ * Uso: php artisan db:seed --class=AdminTemporalSeeder
+ */
 class AdminTemporalSeeder extends Seeder
 {
-    /**
-     * Crea un usuario administrador temporal para acceder al panel
-     */
     public function run(): void
     {
-        // Buscar si ya existe un admin temporal
-        $admin = User::where('email', 'admin@temp.com')->first();
-        
-        if ($admin) {
-            // Actualizar credenciales si ya existe
-            $admin->update([
-                'nombre' => 'Admin',
-                'apellido_paterno' => 'Temporal',
-                'apellido_materno' => 'Sistema',
-                'contrasena' => Hash::make('admin123'),
-                'rol' => 'admin',
-            ]);
-            $this->command->info('✓ Usuario administrador temporal actualizado');
-        } else {
-            // Crear nuevo admin temporal
-            User::create([
-                'nombre' => 'Admin',
-                'apellido_paterno' => 'Temporal',
-                'apellido_materno' => 'Sistema',
-                'email' => 'admin@temp.com',
-                'contrasena' => Hash::make('admin123'),
-                'rol' => 'admin',
-            ]);
-            $this->command->info('✓ Usuario administrador temporal creado');
+        if (app()->environment('production')) {
+            $this->command->error('AdminTemporalSeeder está bloqueado en producción.');
+
+            return;
         }
 
-        $this->command->info('');
-        $this->command->info('═══════════════════════════════════════════════════');
-        $this->command->info('  CREDENCIALES TEMPORALES DE ADMINISTRADOR');
-        $this->command->info('═══════════════════════════════════════════════════');
-        $this->command->info('  Email: admin@temp.com');
-        $this->command->info('  Contraseña: admin123');
-        $this->command->info('═══════════════════════════════════════════════════');
-        $this->command->info('');
-        $this->command->info('⚠️  IMPORTANTE: Estas son credenciales temporales.');
-        $this->command->info('   Cámbialas desde el panel de administración.');
-        $this->command->info('');
+        $email = env('ADMIN_TEMPORAL_EMAIL');
+        $password = env('ADMIN_TEMPORAL_PASSWORD');
+
+        if (!$email || !$password) {
+            $this->command->error('Define ADMIN_TEMPORAL_EMAIL y ADMIN_TEMPORAL_PASSWORD en el archivo .env.');
+
+            return;
+        }
+
+        $datos = [
+            'nombre' => 'Admin',
+            'apellido_paterno' => 'Temporal',
+            'apellido_materno' => 'Sistema',
+            'contrasena' => Hash::make($password),
+            'rol' => 'admin',
+        ];
+
+        $admin = User::where('email', $email)->first();
+
+        if ($admin) {
+            $admin->update($datos);
+            $this->command->info("Administrador temporal actualizado: {$email}");
+        } else {
+            User::create($datos + ['email' => $email]);
+            $this->command->info("Administrador temporal creado: {$email}");
+        }
+
+        $this->command->warn('La contraseña no se imprime: es la definida en ADMIN_TEMPORAL_PASSWORD.');
     }
 }
-
-
-
-
-
-

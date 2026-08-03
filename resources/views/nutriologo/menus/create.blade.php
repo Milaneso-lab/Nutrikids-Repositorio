@@ -5,76 +5,62 @@
 @section('page-title', 'Crear Nuevo Menú')
 
 @section('navigation')
-    <a href="{{ route('nutriologo.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-home"></i>
-        <span>Dashboard</span>
-    </a>
-    <a href="{{ route('nutriologo.pacientes.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-child"></i>
-        <span>Pacientes</span>
-    </a>
-    <a href="{{ route('nutriologo.evaluaciones.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-clipboard-check"></i>
-        <span>Evaluaciones</span>
-    </a>
-    <a href="{{ route('nutriologo.menus.index') }}" class="flex items-center space-x-3 px-4 py-3 bg-green-500 rounded-lg text-white">
-        <i class="fas fa-utensils"></i>
-        <span>Menús</span>
-    </a>
-    <a href="{{ route('nutriologo.reportes.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-chart-bar"></i>
-        <span>Reportes</span>
-    </a>
+    @include('nutriologo.partials.navigation')
 @endsection
 
 @section('content')
-    <form class="bg-white rounded-lg shadow-md p-6">
+    <form action="{{ route('nutriologo.menus.store') }}" method="POST" class="bg-white rounded-lg shadow-md p-6">
+        @csrf
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Menú</label>
-                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Ej: Menú Semanal Balanceado">
+                <input type="text" name="nombre" value="{{ old('nombre') }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Ej: Menú Semanal Balanceado" required>
+                @error('nombre')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Asignar a Paciente</label>
-                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                    <option>Seleccionar paciente...</option>
-                    <option>María González</option>
-                    <option>Juan Pérez</option>
+                <select name="paciente_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" required>
+                    <option value="">Seleccionar paciente...</option>
+                    @foreach($pacientes as $paciente)
+                        <option value="{{ $paciente->id }}" @selected(old('paciente_id', $selectedPacienteId ?? null) == $paciente->id)>
+                            {{ trim($paciente->nombre . ' ' . $paciente->apellidos) }}
+                        </option>
+                    @endforeach
+                </select>
+                @if($pacientes->isEmpty())
+                    <p class="mt-2 text-sm text-amber-700">No hay pacientes registrados todavía. Primero crea un paciente para poder asignarle un menú.</p>
+                @endif
+                @error('paciente_id')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Estado inicial</label>
+                <select name="estado" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    <option value="activo" @selected(old('estado', 'activo') === 'activo')>Activo</option>
+                    <option value="borrador" @selected(old('estado') === 'borrador')>Borrador</option>
                 </select>
             </div>
         </div>
 
         <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Plan Semanal</h3>
-            <div class="space-y-4">
-                @foreach(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] as $day)
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <h4 class="font-semibold text-gray-800 mb-3">{{ $day }}</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">Desayuno</label>
-                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Ej: Avena con frutas">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">Comida</label>
-                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Ej: Pollo con verduras">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">Cena</label>
-                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Ej: Sopa de verduras">
-                        </div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Descripción del plan alimenticio</label>
+            <textarea name="descripcion" rows="10" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Escribe aquí el plan semanal, por ejemplo:&#10;Lunes - Desayuno: ...&#10;Lunes - Comida: ...&#10;Lunes - Cena: ...">{{ old('descripcion') }}</textarea>
+            <p class="mt-2 text-sm text-gray-500">La base actual del proyecto guarda el plan completo en un solo campo de descripción.</p>
+            @error('descripcion')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
         </div>
 
         <div class="flex justify-end space-x-3">
             <a href="{{ route('nutriologo.menus.index') }}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancelar</a>
-            <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+            <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" @disabled($pacientes->isEmpty())>
                 <i class="fas fa-save mr-2"></i>Guardar Menú
             </button>
         </div>
     </form>
 @endsection
+
 

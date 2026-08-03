@@ -16,7 +16,7 @@ class UsuarioController extends Controller
             'nombre' => 'required|string|min:2|max:50|regex:/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/',
             'apellido_paterno' => 'required|string|min:2|max:50|regex:/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/',
             'apellido_materno' => 'nullable|string|min:2|max:50|regex:/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/',
-            'email' => 'required|email|max:100|unique:Usuarios,email',
+            'email' => 'required|email|max:100|unique:usuarios,email',
             'contrasena' => [
                 'required',
                 'string',
@@ -68,8 +68,7 @@ class UsuarioController extends Controller
             \Log::error('Error al registrar usuario: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al registrar el usuario. Por favor, inténtalo de nuevo.',
-                'error' => config('app.debug') ? $e->getMessage() : null
+                'message' => 'No se pudo registrar. Revisa los datos e inténtalo de nuevo.',
             ], 500);
         }
     }

@@ -1,40 +1,25 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Gestión de Contenido - Administrador')
 
 @section('page-title', 'Gestión de Contenido')
 
 @section('navigation')
-    <a href="{{ route('admin.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-home"></i>
-        <span>Dashboard</span>
-    </a>
-    <a href="{{ route('admin.usuarios.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-users"></i>
-        <span>Usuarios</span>
-    </a>
-    <a href="{{ route('admin.contenido.index') }}" class="flex items-center space-x-3 px-4 py-3 bg-green-500 rounded-lg text-white">
-        <i class="fas fa-database"></i>
-        <span>Contenido</span>
-    </a>
-    <a href="{{ route('admin.configuracion.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-cog"></i>
-        <span>Configuración</span>
-    </a>
+    @include('admin.partials.navigation')
 @endsection
 
 @section('content')
     <!-- Tabs para las secciones -->
-    <div class="bg-white rounded-lg shadow-md mb-6">
-        <div class="border-b border-gray-200">
+    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md mb-6 border border-slate-200/80 dark:border-slate-800">
+        <div class="border-b border-gray-200 dark:border-slate-700">
             <nav class="flex -mb-px">
-                <button onclick="showSection('contactos')" id="tab-contactos" class="tab-button active px-6 py-4 text-sm font-medium text-green-600 border-b-2 border-green-600">
+                <button type="button" onclick="showSection('contactos')" id="tab-contactos" class="tab-button active px-6 py-4 text-sm font-medium text-green-600 dark:text-emerald-400 border-b-2 border-green-600 dark:border-emerald-500 bg-slate-50/50 dark:bg-slate-800/40">
                     <i class="fas fa-envelope mr-2"></i>Contactos
                 </button>
-                <button onclick="showSection('comentarios')" id="tab-comentarios" class="tab-button px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+                <button type="button" onclick="showSection('comentarios')" id="tab-comentarios" class="tab-button px-6 py-4 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition">
                     <i class="fas fa-comment mr-2"></i>Comentarios
                 </button>
-                <button onclick="showSection('discusiones')" id="tab-discusiones" class="tab-button px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+                <button type="button" onclick="showSection('discusiones')" id="tab-discusiones" class="tab-button px-6 py-4 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition">
                     <i class="fas fa-comments mr-2"></i>Discusiones
                 </button>
             </nav>
@@ -43,47 +28,47 @@
 
     <!-- Sección de Contactos -->
     <div id="section-contactos" class="content-section">
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800">Formulario de CONTÁCTANOS</h3>
-                <p class="text-sm text-gray-600">Mensajes recibidos desde el formulario de contacto</p>
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden border border-slate-200/80 dark:border-slate-800">
+            <div class="p-6 border-b border-gray-200 dark:border-slate-700">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-slate-100">Formulario de CONTÁCTANOS</h3>
+                <p class="text-sm text-gray-600 dark:text-slate-400">Mensajes recibidos desde el formulario de contacto</p>
             </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                    <thead class="bg-slate-100 dark:bg-slate-800">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mensaje</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Nombre</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Mensaje</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Fecha</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-800">
                         @forelse($contactos as $contacto)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-slate-100">
                                 {{ $contacto->nombre }} {{ $contacto->apellido }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $contacto->email }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-200">{{ $contacto->email }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-slate-200">
                                 <div class="max-w-xs truncate">{{ $contacto->mensaje }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
                                 {{ $contacto->created_at ? $contacto->created_at->format('d/m/Y H:i') : 'N/A' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button onclick="responderContacto({{ $contacto->id_contacto }})" class="text-green-600 hover:text-green-900 mr-3">
+                                <button type="button" onclick="responderContacto({{ $contacto->id_contacto }})" class="text-green-600 dark:text-emerald-400 hover:text-green-800 dark:hover:text-emerald-300 mr-3">
                                     <i class="fas fa-reply"></i> Responder
                                 </button>
-                                <button onclick="eliminarContacto({{ $contacto->id_contacto }})" class="text-red-600 hover:text-red-900">
+                                <button type="button" onclick="eliminarContacto({{ $contacto->id_contacto }})" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300">
                                     <i class="fas fa-trash"></i> Eliminar
                                 </button>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay contactos registrados.</td>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-slate-400">No hay contactos registrados.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -94,42 +79,42 @@
 
     <!-- Sección de Comentarios -->
     <div id="section-comentarios" class="content-section" style="display: none;">
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800">Formulario de COMENTARIOS</h3>
-                <p class="text-sm text-gray-600">Comentarios publicados por los padres</p>
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden border border-slate-200/80 dark:border-slate-800">
+            <div class="p-6 border-b border-gray-200 dark:border-slate-700">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-slate-100">Formulario de COMENTARIOS</h3>
+                <p class="text-sm text-gray-600 dark:text-slate-400">Comentarios publicados por los padres</p>
             </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                    <thead class="bg-slate-100 dark:bg-slate-800">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Comentario</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Nombre</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Comentario</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Fecha</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-800">
                         @forelse($comentarios as $comentario)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-slate-100">
                                 {{ $comentario->nombre }} {{ $comentario->apellido }}
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-900">
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-slate-200">
                                 <div class="max-w-md">{{ $comentario->comentario }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
                                 {{ $comentario->fecha_comentario ? \Carbon\Carbon::parse($comentario->fecha_comentario)->format('d/m/Y H:i') : 'N/A' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button onclick="eliminarComentario({{ $comentario->id_comentario }})" class="text-red-600 hover:text-red-900">
+                                <button type="button" onclick="eliminarComentario({{ $comentario->id_comentario }})" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300">
                                     <i class="fas fa-trash"></i> Eliminar
                                 </button>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-4 text-center text-gray-500">No hay comentarios registrados.</td>
+                            <td colspan="4" class="px-6 py-4 text-center text-gray-500 dark:text-slate-400">No hay comentarios registrados.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -140,42 +125,42 @@
 
     <!-- Sección de Discusiones -->
     <div id="section-discusiones" class="content-section" style="display: none;">
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800">Formulario de DISCUSIONES</h3>
-                <p class="text-sm text-gray-600">Discusiones creadas por los padres</p>
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden border border-slate-200/80 dark:border-slate-800">
+            <div class="p-6 border-b border-gray-200 dark:border-slate-700">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-slate-100">Formulario de DISCUSIONES</h3>
+                <p class="text-sm text-gray-600 dark:text-slate-400">Discusiones creadas por los padres</p>
             </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                    <thead class="bg-slate-100 dark:bg-slate-800">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tema</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descripción</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Tema</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Descripción</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Fecha</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-800">
                         @forelse($discusiones as $discusion)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-slate-100">
                                 {{ $discusion->tema }}
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-900">
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-slate-200">
                                 <div class="max-w-md">{{ $discusion->descripcion }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
                                 {{ $discusion->fecha_creacion ? \Carbon\Carbon::parse($discusion->fecha_creacion)->format('d/m/Y H:i') : 'N/A' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button onclick="eliminarDiscusion({{ $discusion->id_discusion }})" class="text-red-600 hover:text-red-900">
+                                <button type="button" onclick="eliminarDiscusion({{ $discusion->id_discusion }})" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300">
                                     <i class="fas fa-trash"></i> Eliminar
                                 </button>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-4 text-center text-gray-500">No hay discusiones registradas.</td>
+                            <td colspan="4" class="px-6 py-4 text-center text-gray-500 dark:text-slate-400">No hay discusiones registradas.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -185,23 +170,23 @@
     </div>
 
     <!-- Modal para responder contacto -->
-    <div id="modalResponder" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+    <div id="modalResponder" class="fixed inset-0 bg-gray-600/60 dark:bg-slate-950/70 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-xl p-6 max-w-md w-full mx-4 border border-slate-200 dark:border-slate-700">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-semibold text-gray-800">Responder Contacto</h3>
-                <button onclick="cerrarModal()" class="text-gray-500 hover:text-gray-700">
+                <h3 class="text-xl font-semibold text-gray-800 dark:text-slate-100">Responder Contacto</h3>
+                <button type="button" onclick="cerrarModal()" class="text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <form id="formResponder">
                 <input type="hidden" id="contactoId">
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Respuesta</label>
-                    <textarea id="respuestaTexto" rows="5" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Respuesta</label>
+                    <textarea id="respuestaTexto" rows="5" required class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500"></textarea>
                 </div>
                 <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="cerrarModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <button type="button" onclick="cerrarModal()" class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 dark:bg-emerald-600 text-white rounded-lg hover:bg-green-700 dark:hover:bg-emerald-500">
                         <i class="fas fa-paper-plane mr-2"></i>Enviar Respuesta
                     </button>
                 </div>
@@ -220,8 +205,8 @@
         
         // Ocultar todos los tabs activos
         document.querySelectorAll('.tab-button').forEach(btn => {
-            btn.classList.remove('active', 'text-green-600', 'border-green-600');
-            btn.classList.add('text-gray-500');
+            btn.classList.remove('active', 'text-green-600', 'border-green-600', 'border-b-2', 'dark:text-emerald-400', 'dark:border-emerald-500', 'bg-slate-50/50', 'dark:bg-slate-800/40');
+            btn.classList.add('text-gray-500', 'dark:text-slate-400');
         });
         
         // Mostrar la sección seleccionada
@@ -229,8 +214,8 @@
         
         // Activar el tab correspondiente
         const tab = document.getElementById('tab-' + section);
-        tab.classList.add('active', 'text-green-600', 'border-b-2', 'border-green-600');
-        tab.classList.remove('text-gray-500');
+        tab.classList.add('active', 'text-green-600', 'border-b-2', 'border-green-600', 'dark:text-emerald-400', 'dark:border-emerald-500', 'bg-slate-50/50', 'dark:bg-slate-800/40');
+        tab.classList.remove('text-gray-500', 'dark:text-slate-400');
     }
 
     function responderContacto(id) {
@@ -272,7 +257,7 @@
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error de conexión. Por favor, inténtalo de nuevo.');
+            alert('No se pudo completar la acción. Inténtalo de nuevo.');
         });
     });
 
@@ -346,6 +331,10 @@
     .tab-button.active {
         border-bottom: 2px solid #16a34a;
         color: #16a34a;
+    }
+    .dark .tab-button.active {
+        color: rgb(52 211 153);
+        border-bottom-color: rgb(16 185 129);
     }
 </style>
 @endpush

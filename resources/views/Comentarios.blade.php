@@ -1,9 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('CSS/style.css') }}">
     <title>NutriKids - Comentarios</title>
     <style>
@@ -199,7 +202,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(15, 23, 42, 0.38);
+            backdrop-filter: blur(3px);
             display: none;
             justify-content: center;
             align-items: center;
@@ -426,692 +430,296 @@
     </footer>
 
     <script>
-// Función para validar email
 function validarEmail(email) {
     const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return regex.test(email);
 }
-
-// Función para validar solo letras y espacios
 function validarSoloLetras(texto) {
-    const regex = /^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/;
+    const regex = /^[A-Za-z\u00C1\u00E1\u00C9\u00E9\u00CD\u00ED\u00D3\u00F3\u00DA\u00FA\u00D1\u00F1\s]+$/;
     return regex.test(texto);
 }
-
-// Función para mostrar errores de validación
 function mostrarError(campo, mensaje) {
-    const input = document.querySelector(`[name="${campo}"]`);
-    input.style.borderColor = '#d32f2f';
-    input.style.backgroundColor = '#ffebee';
-    
-    // Crear o actualizar mensaje de error
-    let errorDiv = document.getElementById(`error-${campo}`);
+    const input = document.querySelector('[name="' + campo + '"]');
+    if (!input) return;
+    input.style.borderColor = '#b91c1c';
+    input.style.backgroundColor = '#fef2f2';
+    let errorDiv = document.getElementById('error-' + campo);
     if (!errorDiv) {
         errorDiv = document.createElement('div');
-        errorDiv.id = `error-${campo}`;
-        errorDiv.style.color = '#d32f2f';
-        errorDiv.style.fontSize = '12px';
+        errorDiv.id = 'error-' + campo;
+        errorDiv.style.color = '#b91c1c';
+        errorDiv.style.fontSize = '13px';
         errorDiv.style.marginTop = '5px';
         input.parentNode.insertBefore(errorDiv, input.nextSibling);
     }
     errorDiv.textContent = mensaje;
     errorDiv.style.display = 'block';
 }
-
-// Función para limpiar errores
 function limpiarError(campo) {
-    const input = document.querySelector(`[name="${campo}"]`);
+    const input = document.querySelector('[name="' + campo + '"]');
+    if (!input) return;
     input.style.borderColor = '';
     input.style.backgroundColor = '';
-    
-    const errorDiv = document.getElementById(`error-${campo}`);
-    if (errorDiv) {
-        errorDiv.style.display = 'none';
-    }
+    const errorDiv = document.getElementById('error-' + campo);
+    if (errorDiv) errorDiv.style.display = 'none';
 }
-
-// Validaciones en tiempo real
-document.querySelector('input[name="nombre"]').addEventListener('input', function() {
-    const valor = this.value.trim();
-    if (valor.length === 0) {
-        mostrarError('nombre', 'El nombre es requerido');
-    } else if (!validarSoloLetras(valor)) {
-        mostrarError('nombre', 'Solo se permiten letras y espacios');
-    } else if (valor.length < 2) {
-        mostrarError('nombre', 'El nombre debe tener al menos 2 caracteres');
-    } else {
-        limpiarError('nombre');
-    }
-});
-
-document.querySelector('input[name="apellido"]').addEventListener('input', function() {
-    const valor = this.value.trim();
-    if (valor.length === 0) {
-        mostrarError('apellido', 'El apellido es requerido');
-    } else if (!validarSoloLetras(valor)) {
-        mostrarError('apellido', 'Solo se permiten letras y espacios');
-    } else if (valor.length < 2) {
-        mostrarError('apellido', 'El apellido debe tener al menos 2 caracteres');
-    } else {
-        limpiarError('apellido');
-    }
-});
-
-document.querySelector('input[name="email"]').addEventListener('input', function() {
-    const valor = this.value.trim();
-    if (valor.length === 0) {
-        mostrarError('email', 'El email es requerido');
-    } else if (!validarEmail(valor)) {
-        mostrarError('email', 'Ingrese un email válido (ejemplo: usuario@dominio.com)');
-    } else {
-        limpiarError('email');
-    }
-});
-
-document.querySelector('textarea[name="mensaje"]').addEventListener('input', function() {
-    const valor = this.value.trim();
-    if (valor.length === 0) {
-        mostrarError('mensaje', 'El mensaje es requerido');
-    } else if (valor.length < 10) {
-        mostrarError('mensaje', 'El mensaje debe tener al menos 10 caracteres');
-    } else if (valor.length > 500) {
-        mostrarError('mensaje', 'El mensaje no puede exceder 500 caracteres');
-    } else {
-        limpiarError('mensaje');
-    }
-});
-
-// Función para validar todo el formulario
-function validarFormulario() {
+function validarFormularioContacto() {
     const nombre = document.querySelector('input[name="nombre"]').value.trim();
     const apellido = document.querySelector('input[name="apellido"]').value.trim();
     const email = document.querySelector('input[name="email"]').value.trim();
     const mensaje = document.querySelector('textarea[name="mensaje"]').value.trim();
-    
     let esValido = true;
-    
-    // Validar nombre
-    if (nombre.length === 0) {
-        mostrarError('nombre', 'El nombre es requerido');
-        esValido = false;
-    } else if (!validarSoloLetras(nombre)) {
-        mostrarError('nombre', 'Solo se permiten letras y espacios');
-        esValido = false;
-    } else if (nombre.length < 2) {
-        mostrarError('nombre', 'El nombre debe tener al menos 2 caracteres');
-        esValido = false;
-    }
-    
-    // Validar apellido
-    if (apellido.length === 0) {
-        mostrarError('apellido', 'El apellido es requerido');
-        esValido = false;
-    } else if (!validarSoloLetras(apellido)) {
-        mostrarError('apellido', 'Solo se permiten letras y espacios');
-        esValido = false;
-    } else if (apellido.length < 2) {
-        mostrarError('apellido', 'El apellido debe tener al menos 2 caracteres');
-        esValido = false;
-    }
-    
-    // Validar email
-    if (email.length === 0) {
-        mostrarError('email', 'El email es requerido');
-        esValido = false;
-    } else if (!validarEmail(email)) {
-        mostrarError('email', 'Ingrese un email válido (ejemplo: usuario@dominio.com)');
-        esValido = false;
-    }
-    
-    // Validar mensaje
-    if (mensaje.length === 0) {
-        mostrarError('mensaje', 'El mensaje es requerido');
-        esValido = false;
-    } else if (mensaje.length < 10) {
-        mostrarError('mensaje', 'El mensaje debe tener al menos 10 caracteres');
-        esValido = false;
-    } else if (mensaje.length > 500) {
-        mostrarError('mensaje', 'El mensaje no puede exceder 500 caracteres');
-        esValido = false;
-    }
-    
+    if (nombre.length === 0) { mostrarError('nombre', 'El nombre es requerido'); esValido = false; }
+    else if (!validarSoloLetras(nombre)) { mostrarError('nombre', 'Solo se permiten letras y espacios'); esValido = false; }
+    else if (nombre.length < 2) { mostrarError('nombre', 'El nombre debe tener al menos 2 caracteres'); esValido = false; }
+    if (apellido.length === 0) { mostrarError('apellido', 'El apellido es requerido'); esValido = false; }
+    else if (!validarSoloLetras(apellido)) { mostrarError('apellido', 'Solo se permiten letras y espacios'); esValido = false; }
+    else if (apellido.length < 2) { mostrarError('apellido', 'El apellido debe tener al menos 2 caracteres'); esValido = false; }
+    if (email.length === 0) { mostrarError('email', 'El email es requerido'); esValido = false; }
+    else if (!validarEmail(email)) { mostrarError('email', 'Ingrese un email válido'); esValido = false; }
+    if (mensaje.length === 0) { mostrarError('mensaje', 'El mensaje es requerido'); esValido = false; }
+    else if (mensaje.length < 10) { mostrarError('mensaje', 'El mensaje debe tener al menos 10 caracteres'); esValido = false; }
+    else if (mensaje.length > 500) { mostrarError('mensaje', 'El mensaje no puede exceder 500 caracteres'); esValido = false; }
     return esValido;
 }
-
-// Script para manejar el envío del formulario de contacto por AJAX
-const form = document.getElementById('contactoForm');
-const mensajeExito = document.getElementById('mensajeExito');
-const mensajeError = document.getElementById('mensajeError');
-const mensajeCargando = document.getElementById('mensajeCargando');
-const btnEnviar = document.getElementById('btnEnviar');
-
-form.addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevenir envío normal del formulario
-    
-    // Validar formulario antes de enviar
-    if (!validarFormulario()) {
-        return;
-    }
-    
-    // Ocultar mensajes anteriores
-    mensajeExito.style.display = 'none';
-    mensajeError.style.display = 'none';
-    mensajeCargando.style.display = 'block';
-    btnEnviar.disabled = true;
-    
-    // Obtener datos del formulario
-    const formData = new FormData(form);
-    
-    // Obtener token CSRF
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
-    
-    // Enviar datos por AJAX
-    fetch('{{ route("contacto.store") }}', {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': csrfToken
-        },
-        body: formData,
-        credentials: 'same-origin'
-    })
-    .then(response => {
-        if (!response.ok) {
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.includes("application/json")) {
-                return response.json().then(err => { throw err; });
-            } else {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-        }
-        return response.json();
-    })
-    .then(data => {
-        mensajeCargando.style.display = 'none';
-        btnEnviar.disabled = false;
-        
-        if (data.success) {
-            // Éxito - Ocultar mensaje de error si existe
-            mensajeError.style.display = 'none';
-            mensajeExito.textContent = data.message;
-            mensajeExito.style.display = 'block';
-            form.reset(); // Limpiar formulario
-            
-            // Limpiar todos los errores
-            ['nombre', 'apellido', 'email', 'mensaje'].forEach(campo => {
-                limpiarError(campo);
-            });
-            
-            // Ocultar mensaje de éxito después de 5 segundos
-            setTimeout(() => {
-                mensajeExito.style.display = 'none';
-            }, 5000);
-        } else {
-            // Error - Ocultar mensaje de éxito si existe
-            mensajeExito.style.display = 'none';
-            let errorMsg = data.message;
-            if (data.errors && data.errors.length > 0) {
-                errorMsg += ': ' + data.errors.join(', ');
-            }
-            mensajeError.textContent = errorMsg;
-            mensajeError.style.display = 'block';
-            
-            // Ocultar mensaje de error después de 8 segundos
-            setTimeout(() => {
-                mensajeError.style.display = 'none';
-            }, 8000);
-        }
-    })
-    .catch(error => {
-        mensajeCargando.style.display = 'none';
-        btnEnviar.disabled = false;
-        
-        // Ocultar mensaje de éxito si existe
-        mensajeExito.style.display = 'none';
-        
-        console.error('Error:', error);
-        let displayError = 'Error de conexión. Por favor, inténtalo de nuevo.';
-        
-        // Si el error es un objeto con success, usar su mensaje
-        if (error && typeof error === 'object') {
-            if (error.success === false && error.message) {
-                displayError = error.message;
-            } else if (error.message) {
-                if (!error.message.includes('CSRF token mismatch')) {
-                    displayError = error.message;
-                }
-            }
-        } else if (typeof error === 'string') {
-            displayError = error;
-        }
-        
-        // No mostrar errores técnicos al usuario
-        if (displayError.includes('SQLSTATE') || displayError.includes('Unknown column') || displayError.includes('Connection')) {
-            displayError = 'Error al enviar el mensaje. Por favor, inténtalo de nuevo.';
-        }
-        
-        mensajeError.textContent = displayError;
-        mensajeError.style.display = 'block';
-        
-        // Ocultar mensaje de error después de 8 segundos
-        setTimeout(() => {
-            mensajeError.style.display = 'none';
-        }, 8000);
-    });
-});
-
-// Función para cargar comentarios desde la base de datos
+function escapeHtml(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
 function cargarComentarios() {
-    fetch('{{ route("comentarios.index") }}')
-    .then(response => response.json())
-    .then(data => {
-        const container = document.getElementById('comentarios-container');
-        
-        if (data.success && data.comentarios.length > 0) {
-            container.innerHTML = '';
-            data.comentarios.forEach((comentario, index) => {
-                const fecha = new Date(comentario.fecha_comentario);
-                const fechaFormateada = fecha.toLocaleDateString('es-ES', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                });
-                
-                const comentarioHTML = `
-                    <div class="comentario">
-                        <div class="comentario-info">
-                            <h4>${comentario.nombre} ${comentario.apellido} <span>• ${fechaFormateada}</span></h4>
-                            <p id="comentario-texto-${index}" onclick="abrirModalComentario(${index})" title="Haz clic para ver el comentario completo">${comentario.comentario}</p>
-                            <button class="btn-leer-mas hidden" id="btn-leer-mas-${index}" onclick="toggleComentario(${index})">Leer más</button>
-                        </div>
-                    </div>
-                `;
-                container.innerHTML += comentarioHTML;
-            });
-            
-            // Verificar si los comentarios necesitan el botón "leer más"
-            setTimeout(() => {
-                verificarComentariosLargos();
-            }, 100);
-            
-            // Guardar los comentarios para usar en el modal
-            window.comentariosData = data.comentarios;
-        } else {
-            container.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">No hay comentarios aún. ¡Sé el primero en comentar!</p>';
-        }
-    })
-    .catch(error => {
-        console.error('Error al cargar comentarios:', error);
-        const container = document.getElementById('comentarios-container');
-        container.innerHTML = '<p style="text-align: center; color: #721c24;">Error al cargar comentarios. Por favor, recarga la página.</p>';
-    });
-}
-
-// Función para verificar si los comentarios son largos y necesitan el botón "leer más"
-function verificarComentariosLargos() {
-    const comentarios = document.querySelectorAll('.comentario-info p');
-    comentarios.forEach((comentario, index) => {
-        const btnLeerMas = document.getElementById(`btn-leer-mas-${index}`);
-        if (btnLeerMas) {
-            // Verificar si el contenido es más alto que el contenedor
-            const scrollHeight = comentario.scrollHeight;
-            const clientHeight = comentario.clientHeight;
-            
-            if (scrollHeight > clientHeight) {
-                btnLeerMas.classList.remove('hidden');
-            } else {
-                btnLeerMas.classList.add('hidden');
+    const container = document.getElementById('comentarios-container');
+    if (!container) return;
+    fetch(@json(route('comentarios.index')), { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+        .then(function (res) {
+            if (!res.ok || !res.data.success) {
+                container.innerHTML = '<p style="text-align:center;color:#b91c1c;">No se pudieron cargar los comentarios. Inténtalo de nuevo.</p>';
+                return;
             }
-        }
+            const data = res.data;
+            if (data.comentarios && data.comentarios.length > 0) {
+                container.innerHTML = '';
+                data.comentarios.forEach(function (comentario, index) {
+                    const fecha = new Date(comentario.fecha_comentario);
+                    const fechaFormateada = fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+                    const row = document.createElement('div');
+                    row.className = 'comentario';
+                    row.innerHTML =
+                        '<div class="comentario-info"><h4>' +
+                        escapeHtml(comentario.nombre) + ' ' + escapeHtml(comentario.apellido) +
+                        ' <span>• ' + fechaFormateada + '</span></h4>' +
+                        '<p id="comentario-texto-' + index + '" title="Ver comentario completo"></p>' +
+                        '<button type="button" class="btn-leer-mas hidden" id="btn-leer-mas-' + index + '">Leer más</button></div>';
+                    container.appendChild(row);
+                    document.getElementById('comentario-texto-' + index).textContent = comentario.comentario;
+                });
+                document.querySelectorAll('[id^="comentario-texto-"]').forEach(function (el, index) {
+                    el.addEventListener('click', function () { abrirModalComentario(index); });
+                    var b = document.getElementById('btn-leer-mas-' + index);
+                    if (b) b.addEventListener('click', function (e) { e.stopPropagation(); toggleComentario(index); });
+                });
+                setTimeout(verificarComentariosLargos, 100);
+                window.comentariosData = data.comentarios;
+            } else {
+                container.innerHTML = '<p style="text-align:center;color:#64748b;font-style:italic;">No hay comentarios aún. ¡Sé el primero en comentar!</p>';
+            }
+        })
+        .catch(function () {
+            container.innerHTML = '<p style="text-align:center;color:#b91c1c;">No se pudieron cargar los comentarios. Inténtalo de nuevo.</p>';
+        });
+}
+function verificarComentariosLargos() {
+    document.querySelectorAll('.comentario-info p').forEach(function (comentario, index) {
+        var btnLeerMas = document.getElementById('btn-leer-mas-' + index);
+        if (!btnLeerMas) return;
+        if (comentario.scrollHeight > comentario.clientHeight) btnLeerMas.classList.remove('hidden');
+        else btnLeerMas.classList.add('hidden');
     });
 }
-
-// Función para expandir/contraer comentarios
 function toggleComentario(index) {
-    const comentario = document.getElementById(`comentario-texto-${index}`);
-    const btnLeerMas = document.getElementById(`btn-leer-mas-${index}`);
-    
+    var comentario = document.getElementById('comentario-texto-' + index);
+    var btnLeerMas = document.getElementById('btn-leer-mas-' + index);
+    if (!comentario || !btnLeerMas) return;
     if (comentario.classList.contains('expanded')) {
-        // Contraer
         comentario.classList.remove('expanded');
         btnLeerMas.textContent = 'Leer más';
     } else {
-        // Expandir
         comentario.classList.add('expanded');
         btnLeerMas.textContent = 'Leer menos';
     }
 }
-
-// Función para abrir modal con comentario completo
 function abrirModalComentario(index) {
-    if (window.comentariosData && window.comentariosData[index]) {
-        const comentario = window.comentariosData[index];
-        const fecha = new Date(comentario.fecha_comentario);
-        const fechaFormateada = fecha.toLocaleDateString('es-ES', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        document.getElementById('modal-title').textContent = `Comentario de ${comentario.nombre} ${comentario.apellido}`;
-        document.getElementById('modal-body').textContent = comentario.comentario;
-        document.getElementById('modal-footer').textContent = `Publicado el: ${fechaFormateada}`;
-        
-        document.getElementById('modal-overlay').style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Prevenir scroll del body
-    }
+    if (!window.comentariosData || !window.comentariosData[index]) return;
+    var comentario = window.comentariosData[index];
+    var fecha = new Date(comentario.fecha_comentario);
+    var fechaFormateada = fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    document.getElementById('modal-title').textContent = 'Comentario de ' + comentario.nombre + ' ' + comentario.apellido;
+    document.getElementById('modal-body').textContent = comentario.comentario;
+    document.getElementById('modal-footer').textContent = 'Publicado el: ' + fechaFormateada;
+    document.getElementById('modal-overlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
-
-// Función para cerrar modal
 function cerrarModal() {
-    document.getElementById('modal-overlay').style.display = 'none';
-    document.body.style.overflow = 'auto'; // Restaurar scroll del body
+    var o = document.getElementById('modal-overlay');
+    if (o) o.style.display = 'none';
+    document.body.style.overflow = 'auto';
 }
-
-// Cerrar modal al hacer clic fuera del contenido
-document.addEventListener('DOMContentLoaded', function() {
-    const modalOverlay = document.getElementById('modal-overlay');
-    modalOverlay.addEventListener('click', function(e) {
-        if (e.target === modalOverlay) {
-            cerrarModal();
-        }
-    });
-    
-    // Cerrar modal con la tecla Escape
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && modalOverlay.style.display === 'flex') {
-            cerrarModal();
-        }
-    });
-});
-
-// Cargar comentarios al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-    cargarComentarios();
-});
-
-// Script para manejar el envío del formulario de contacto por AJAX
-const form = document.getElementById('contactoForm');
-const mensajeExito = document.getElementById('mensajeExito');
-const mensajeError = document.getElementById('mensajeError');
-const mensajeCargando = document.getElementById('mensajeCargando');
-const btnEnviar = document.getElementById('btnEnviar');
-
-// Función para validar email
-function validarEmail(email) {
-    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return regex.test(email);
-}
-
-// Función para validar solo letras y espacios
-function validarSoloLetras(texto) {
-    const regex = /^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/;
-    return regex.test(texto);
-}
-
-// Función para mostrar errores de validación
-function mostrarError(campo, mensaje) {
-    const input = document.querySelector(`[name="${campo}"]`);
-    input.style.borderColor = '#d32f2f';
-    input.style.backgroundColor = '#ffebee';
-    
-    // Crear o actualizar mensaje de error
-    let errorDiv = document.getElementById(`error-${campo}`);
-    if (!errorDiv) {
-        errorDiv = document.createElement('div');
-        errorDiv.id = `error-${campo}`;
-        errorDiv.style.color = '#d32f2f';
-        errorDiv.style.fontSize = '12px';
-        errorDiv.style.marginTop = '5px';
-        input.parentNode.insertBefore(errorDiv, input.nextSibling);
+document.addEventListener('DOMContentLoaded', function () {
+    var modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', function (e) { if (e.target === modalOverlay) cerrarModal(); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modalOverlay.style.display === 'flex') cerrarModal();
+        });
     }
-    errorDiv.textContent = mensaje;
-    errorDiv.style.display = 'block';
-}
-
-// Función para limpiar errores
-function limpiarError(campo) {
-    const input = document.querySelector(`[name="${campo}"]`);
-    input.style.borderColor = '';
-    input.style.backgroundColor = '';
-    
-    const errorDiv = document.getElementById(`error-${campo}`);
-    if (errorDiv) {
-        errorDiv.style.display = 'none';
-    }
-}
-
-// Validaciones en tiempo real
-document.querySelector('input[name="nombre"]').addEventListener('input', function() {
-    const valor = this.value.trim();
-    if (valor.length === 0) {
-        mostrarError('nombre', 'El nombre es requerido');
-    } else if (!validarSoloLetras(valor)) {
-        mostrarError('nombre', 'Solo se permiten letras y espacios');
-    } else if (valor.length < 2) {
-        mostrarError('nombre', 'El nombre debe tener al menos 2 caracteres');
-    } else {
-        limpiarError('nombre');
-    }
-});
-
-document.querySelector('input[name="apellido"]').addEventListener('input', function() {
-    const valor = this.value.trim();
-    if (valor.length === 0) {
-        mostrarError('apellido', 'El apellido es requerido');
-    } else if (!validarSoloLetras(valor)) {
-        mostrarError('apellido', 'Solo se permiten letras y espacios');
-    } else if (valor.length < 2) {
-        mostrarError('apellido', 'El apellido debe tener al menos 2 caracteres');
-    } else {
-        limpiarError('apellido');
-    }
-});
-
-document.querySelector('input[name="email"]').addEventListener('input', function() {
-    const valor = this.value.trim();
-    if (valor.length === 0) {
-        mostrarError('email', 'El email es requerido');
-    } else if (!validarEmail(valor)) {
-        mostrarError('email', 'Ingrese un email válido (ejemplo: usuario@dominio.com)');
-    } else {
-        limpiarError('email');
-    }
-});
-
-document.querySelector('textarea[name="mensaje"]').addEventListener('input', function() {
-    const valor = this.value.trim();
-    if (valor.length === 0) {
-        mostrarError('mensaje', 'El mensaje es requerido');
-    } else if (valor.length < 10) {
-        mostrarError('mensaje', 'El mensaje debe tener al menos 10 caracteres');
-    } else if (valor.length > 500) {
-        mostrarError('mensaje', 'El mensaje no puede exceder 500 caracteres');
-    } else {
-        limpiarError('mensaje');
-    }
-});
-
-// Función para validar todo el formulario
-function validarFormulario() {
-    const nombre = document.querySelector('input[name="nombre"]').value.trim();
-    const apellido = document.querySelector('input[name="apellido"]').value.trim();
-    const email = document.querySelector('input[name="email"]').value.trim();
-    const mensaje = document.querySelector('textarea[name="mensaje"]').value.trim();
-    
-    let esValido = true;
-    
-    // Validar nombre
-    if (nombre.length === 0) {
-        mostrarError('nombre', 'El nombre es requerido');
-        esValido = false;
-    } else if (!validarSoloLetras(nombre)) {
-        mostrarError('nombre', 'Solo se permiten letras y espacios');
-        esValido = false;
-    } else if (nombre.length < 2) {
-        mostrarError('nombre', 'El nombre debe tener al menos 2 caracteres');
-        esValido = false;
-    }
-    
-    // Validar apellido
-    if (apellido.length === 0) {
-        mostrarError('apellido', 'El apellido es requerido');
-        esValido = false;
-    } else if (!validarSoloLetras(apellido)) {
-        mostrarError('apellido', 'Solo se permiten letras y espacios');
-        esValido = false;
-    } else if (apellido.length < 2) {
-        mostrarError('apellido', 'El apellido debe tener al menos 2 caracteres');
-        esValido = false;
-    }
-    
-    // Validar email
-    if (email.length === 0) {
-        mostrarError('email', 'El email es requerido');
-        esValido = false;
-    } else if (!validarEmail(email)) {
-        mostrarError('email', 'Ingrese un email válido (ejemplo: usuario@dominio.com)');
-        esValido = false;
-    }
-    
-    // Validar mensaje
-    if (mensaje.length === 0) {
-        mostrarError('mensaje', 'El mensaje es requerido');
-        esValido = false;
-    } else if (mensaje.length < 10) {
-        mostrarError('mensaje', 'El mensaje debe tener al menos 10 caracteres');
-        esValido = false;
-    } else if (mensaje.length > 500) {
-        mostrarError('mensaje', 'El mensaje no puede exceder 500 caracteres');
-        esValido = false;
-    }
-    
-    return esValido;
-}
-
-form.addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevenir envío normal del formulario
-    
-    // Validar formulario antes de enviar
-    if (!validarFormulario()) {
-        return;
-    }
-    
-    // Ocultar mensajes anteriores
-    mensajeExito.style.display = 'none';
-    mensajeError.style.display = 'none';
-    mensajeCargando.style.display = 'block';
-    btnEnviar.disabled = true;
-    
-    // Obtener datos del formulario
-    const formData = new FormData(form);
-    
-    // Obtener token CSRF
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
-    
-    // Enviar datos por AJAX
-    fetch('{{ route("contacto.store") }}', {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': csrfToken
-        },
-        body: formData,
-        credentials: 'same-origin'
-    })
-    .then(response => {
-        if (!response.ok) {
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.includes("application/json")) {
-                return response.json().then(err => { throw err; });
-            } else {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-        }
-        return response.json();
-    })
-    .then(data => {
-        mensajeCargando.style.display = 'none';
-        btnEnviar.disabled = false;
-        
-        if (data.success) {
-            // Éxito - Ocultar mensaje de error si existe
-            mensajeError.style.display = 'none';
-            mensajeExito.textContent = data.message;
-            mensajeExito.style.display = 'block';
-            form.reset(); // Limpiar formulario
-            
-            // Limpiar todos los errores
-            ['nombre', 'apellido', 'email', 'mensaje'].forEach(campo => {
-                limpiarError(campo);
-            });
-            
-            // Ocultar mensaje de éxito después de 5 segundos
-            setTimeout(() => {
-                mensajeExito.style.display = 'none';
-            }, 5000);
-        } else {
-            // Error - Ocultar mensaje de éxito si existe
-            mensajeExito.style.display = 'none';
-            let errorMsg = data.message;
-            if (data.errors && data.errors.length > 0) {
-                errorMsg += ': ' + data.errors.join(', ');
-            }
-            mensajeError.textContent = errorMsg;
-            mensajeError.style.display = 'block';
-            
-            // Ocultar mensaje de error después de 8 segundos
-            setTimeout(() => {
-                mensajeError.style.display = 'none';
-            }, 8000);
-        }
-    })
-    .catch(error => {
-        mensajeCargando.style.display = 'none';
-        btnEnviar.disabled = false;
-        
-        // Ocultar mensaje de éxito si existe
-        mensajeExito.style.display = 'none';
-        
-        console.error('Error:', error);
-        let displayError = 'Error de conexión. Por favor, inténtalo de nuevo.';
-        
-        // Si el error es un objeto con success, usar su mensaje
-        if (error && typeof error === 'object') {
-            if (error.success === false && error.message) {
-                displayError = error.message;
-            } else if (error.message) {
-                if (!error.message.includes('CSRF token mismatch')) {
-                    displayError = error.message;
+    var form = document.getElementById('contactoForm');
+    if (form) {
+        ['nombre','apellido','email','mensaje'].forEach(function (name) {
+            var sel = name === 'mensaje' ? 'textarea[name="mensaje"]' : 'input[name="' + name + '"]';
+            var el = document.querySelector(sel);
+            if (!el) return;
+            el.addEventListener('input', function () {
+                var v = this.value.trim();
+                if (name === 'nombre') {
+                    if (!v) mostrarError('nombre', 'El nombre es requerido');
+                    else if (!validarSoloLetras(v)) mostrarError('nombre', 'Solo letras y espacios');
+                    else if (v.length < 2) mostrarError('nombre', 'Mínimo 2 caracteres');
+                    else limpiarError('nombre');
+                } else if (name === 'apellido') {
+                    if (!v) mostrarError('apellido', 'El apellido es requerido');
+                    else if (!validarSoloLetras(v)) mostrarError('apellido', 'Solo letras y espacios');
+                    else if (v.length < 2) mostrarError('apellido', 'Mínimo 2 caracteres');
+                    else limpiarError('apellido');
+                } else if (name === 'email') {
+                    if (!v) mostrarError('email', 'El email es requerido');
+                    else if (!validarEmail(v)) mostrarError('email', 'Email no válido');
+                    else limpiarError('email');
+                } else {
+                    if (!v) mostrarError('mensaje', 'El mensaje es requerido');
+                    else if (v.length < 10) mostrarError('mensaje', 'Mínimo 10 caracteres');
+                    else if (v.length > 500) mostrarError('mensaje', 'Máximo 500 caracteres');
+                    else limpiarError('mensaje');
                 }
-            }
-        } else if (typeof error === 'string') {
-            displayError = error;
-        }
-        
-        // No mostrar errores técnicos al usuario
-        if (displayError.includes('SQLSTATE') || displayError.includes('Unknown column') || displayError.includes('Connection')) {
-            displayError = 'Error al enviar el mensaje. Por favor, inténtalo de nuevo.';
-        }
-        
-        mensajeError.textContent = displayError;
-        mensajeError.style.display = 'block';
-        
-        // Ocultar mensaje de error después de 8 segundos
-        setTimeout(() => {
+            });
+        });
+        var mensajeExito = document.getElementById('mensajeExito');
+        var mensajeError = document.getElementById('mensajeError');
+        var mensajeCargando = document.getElementById('mensajeCargando');
+        var btnEnviar = document.getElementById('btnEnviar');
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            if (!validarFormularioContacto()) return;
+            mensajeExito.style.display = 'none';
             mensajeError.style.display = 'none';
-        }, 8000);
-    });
-});
-
-// Cargar comentarios al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
+            mensajeCargando.style.display = 'block';
+            btnEnviar.disabled = true;
+            var csrfEl = document.querySelector('meta[name="csrf-token"]');
+            var csrfToken = csrfEl ? csrfEl.content : '';
+            fetch(@json(route('contacto.store')), {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                body: new FormData(form),
+                credentials: 'same-origin'
+            }).then(function (response) {
+                if (!response.ok) {
+                    var ct = response.headers.get('content-type');
+                    if (ct && ct.indexOf('application/json') !== -1) return response.json().then(function (err) { throw err; });
+                    throw { success: false };
+                }
+                return response.json();
+            }).then(function (data) {
+                mensajeCargando.style.display = 'none';
+                btnEnviar.disabled = false;
+                if (data.success) {
+                    mensajeError.style.display = 'none';
+                    mensajeExito.textContent = data.message;
+                    mensajeExito.style.display = 'block';
+                    form.reset();
+                    ['nombre','apellido','email','mensaje'].forEach(limpiarError);
+                    setTimeout(function () { mensajeExito.style.display = 'none'; }, 5000);
+                } else {
+                    mensajeExito.style.display = 'none';
+                    var errorMsg = data.message || 'Error';
+                    if (data.errors && data.errors.length) errorMsg += ': ' + data.errors.join(', ');
+                    mensajeError.textContent = errorMsg;
+                    mensajeError.style.display = 'block';
+                    setTimeout(function () { mensajeError.style.display = 'none'; }, 8000);
+                }
+            }).catch(function () {
+                mensajeCargando.style.display = 'none';
+                btnEnviar.disabled = false;
+                mensajeExito.style.display = 'none';
+                mensajeError.textContent = 'No se pudo completar la acción. Inténtalo de nuevo.';
+                mensajeError.style.display = 'block';
+                setTimeout(function () { mensajeError.style.display = 'none'; }, 8000);
+            });
+        });
+    }
+    var formComentario = document.getElementById('form-comentario');
+    var btnComentar = document.getElementById('btnComentar');
+    var mensajeExitoComentario = document.getElementById('mensajeExitoComentario');
+    var mensajeErrorComentario = document.getElementById('mensajeErrorComentario');
+    var mensajeCargandoComentario = document.getElementById('mensajeCargandoComentario');
+    if (formComentario && btnComentar && mensajeExitoComentario && mensajeErrorComentario && mensajeCargandoComentario) {
+        formComentario.addEventListener('submit', function (event) {
+            event.preventDefault();
+            var comentario = document.querySelector('#comentario').value.trim();
+            if (comentario.length < 5) { mostrarError('comentario', 'Mínimo 5 caracteres'); return; }
+            if (comentario.length > 1000) { mostrarError('comentario', 'Máximo 1000 caracteres'); return; }
+            limpiarError('comentario');
+            mensajeExitoComentario.style.display = 'none';
+            mensajeErrorComentario.style.display = 'none';
+            mensajeCargandoComentario.style.display = 'block';
+            btnComentar.disabled = true;
+            var csrfEl = document.querySelector('meta[name="csrf-token"]');
+            var csrfToken = csrfEl ? csrfEl.content : '';
+            var headers = { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' };
+            if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
+            fetch(@json(route('comentarios.store')), {
+                method: 'POST',
+                headers: headers,
+                body: new FormData(formComentario),
+                credentials: 'same-origin'
+            }).then(function (response) {
+                if (!response.ok) {
+                    var ct = response.headers.get('content-type');
+                    if (ct && ct.indexOf('application/json') !== -1) return response.json().then(function (err) { throw err; });
+                    throw { success: false };
+                }
+                return response.json();
+            }).then(function (data) {
+                mensajeCargandoComentario.style.display = 'none';
+                btnComentar.disabled = false;
+                if (data.success) {
+                    mensajeErrorComentario.style.display = 'none';
+                    mensajeExitoComentario.textContent = data.message;
+                    mensajeExitoComentario.style.display = 'block';
+                    formComentario.reset();
+                    cargarComentarios();
+                    setTimeout(function () { mensajeExitoComentario.style.display = 'none'; }, 5000);
+                } else {
+                    mensajeExitoComentario.style.display = 'none';
+                    var errorMsg = data.message || 'Error';
+                    if (data.errors && data.errors.length) errorMsg += ': ' + data.errors.join(', ');
+                    mensajeErrorComentario.textContent = errorMsg;
+                    mensajeErrorComentario.style.display = 'block';
+                    setTimeout(function () { mensajeErrorComentario.style.display = 'none'; }, 8000);
+                }
+            }).catch(function (err) {
+                mensajeCargandoComentario.style.display = 'none';
+                btnComentar.disabled = false;
+                mensajeExitoComentario.style.display = 'none';
+                var msg = (window.NutriKidsMessages ? NutriKidsMessages.fromCatch(err) : 'No se pudo completar la acción. Inténtalo de nuevo.');
+                mensajeErrorComentario.textContent = msg;
+                mensajeErrorComentario.style.display = 'block';
+                setTimeout(function () { mensajeErrorComentario.style.display = 'none'; }, 8000);
+            });
+        });
+    }
     cargarComentarios();
 });
-</script>
+    </script>
 </body>
 </html>

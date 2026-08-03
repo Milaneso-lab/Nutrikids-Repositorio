@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('email', 100);
             $table->text('mensaje');
             $table->timestamp('fecha_creacion')->useCurrent();
-            $table->timestamps();
         });
     }
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -276,7 +276,16 @@
             </form>
 
             <div class="register-link">
+                @if(rtrim((string) env('FLASK_PUBLIC_URL', ''), '/') !== '')
+                <p>¿No tienes cuenta? <a href="{{ rtrim((string) env('FLASK_PUBLIC_URL'), '/') . '/login' }}">Regístrate aquí</a></p>
+                @else
                 <p>¿No tienes cuenta? <a href="{{ url('/') }}">Regístrate aquí</a></p>
+                @endif
+                @if(rtrim((string) env('FLASK_PUBLIC_URL', ''), '/') !== '')
+                <p style="margin-top: 12px; font-size: 13px; color: #666;">
+                    Padres: también puedes entrar desde <a href="{{ rtrim((string) env('FLASK_PUBLIC_URL'), '/') . '/login' }}" style="color: #4CAF50;">el sitio principal</a>.
+                </p>
+                @endif
             </div>
         </div>
     </div>
@@ -310,7 +319,7 @@
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             if (!formData.has('_token')) formData.append('_token', csrfToken);
 
-            fetch('{{ route("auth.login") }}', {
+            fetch('/IniciarSesion', {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
@@ -324,7 +333,7 @@
                 if (res.headers.get('content-type') && res.headers.get('content-type').includes('application/json')) {
                     return res.json();
                 }
-                throw new Error('Error de conexión. Recarga la página e intenta de nuevo.');
+                throw new Error('No se pudo completar la acción. Inténtalo de nuevo.');
             })
             .then(function(data) {
                 loading.style.display = 'none';
@@ -345,7 +354,7 @@
                 loading.style.display = 'none';
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Iniciar Sesión';
-                alertError.textContent = err.message || 'Error de conexión. Inténtalo de nuevo.';
+                alertError.textContent = (window.NutriKidsMessages ? NutriKidsMessages.fromCatch(err) : 'No se pudo completar la acción. Inténtalo de nuevo.');
                 alertError.style.display = 'block';
             });
         });

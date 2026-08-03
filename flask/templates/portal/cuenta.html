@@ -1,0 +1,14 @@
+{% extends 'portal/layout.html' %}
+{% block title %}Mi cuenta{% endblock %}
+{% block content %}
+<div class="portal-header"><h1>Configuración de cuenta</h1></div>
+<div class="portal-card" style="max-width:480px">
+    <h3>Datos de acceso</h3>
+    <p><strong>Nombre:</strong> {{ session.get('nombre') }} {{ session.get('apellido', '') }}</p>
+    <p><strong>Correo:</strong> {{ session.get('email', '—') }}</p>
+    <p><strong>Rol:</strong> Padre / tutor</p>
+    <hr style="margin:1rem 0;border:none;border-top:1px solid #e5e7eb">
+    <p style="font-size:0.9rem;color:var(--text-medium)">Para cambiar contraseña o datos sensibles, contacta al administrador o usa la app móvil cuando esté disponible.</p>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary" style="margin-top:1rem;display:inline-block">Ir al sitio público</a>
+</div>
+{% endblock %}

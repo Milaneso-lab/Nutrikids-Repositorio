@@ -1,0 +1,56 @@
+﻿{% extends 'portal/layout.html' %}
+{% block title %}Citas{% endblock %}
+{% block content %}
+<div class="portal-header"><h1>Calendario de citas</h1></div>
+<div class="portal-grid" style="grid-template-columns:1fr 320px;align-items:start">
+    <div>
+        <table class="portal-table">
+            <thead><tr><th>Fecha preferida</th><th>Franja</th><th>Estado</th><th>Notas</th></tr></thead>
+            <tbody>
+            {% for c in citas %}
+                <tr>
+                    <td>{{ c.get('fecha_preferida', '—') }}</td>
+                    <td>{{ 'Tarde' if c.get('franja') == 'tarde' else 'Mañana' }}</td>
+                    <td><span class="portal-badge">{{ c.get('estado') }}</span></td>
+                    <td>{{ c.get('mensaje', '') }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="4" class="portal-empty">No tienes citas registradas.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="portal-card">
+        <h3>Solicitar nueva cita</h3>
+        <form id="form-cita-portal" class="form-group" style="margin-top:1rem">
+            <label>Fecha preferida</label>
+            <input type="date" name="fecha_preferida" required class="form-control" style="width:100%;margin-bottom:0.75rem">
+            <label>Franja</label>
+            <select name="franja" class="form-control" style="width:100%;margin-bottom:0.75rem">
+                <option value="manana">Mañana</option>
+                <option value="tarde">Tarde</option>
+            </select>
+            <label>Mensaje (opcional)</label>
+            <textarea name="mensaje" rows="3" class="form-control" style="width:100%;margin-bottom:0.75rem"></textarea>
+            <button type="submit" class="btn btn-primary" style="width:100%">Enviar solicitud</button>
+        </form>
+        <p id="cita-msg" style="font-size:0.85rem;margin-top:0.75rem"></p>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('form-cita-portal').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const msg = document.getElementById('cita-msg');
+    msg.textContent = 'Enviando…';
+    try {
+        const r = await fetch('/SolicitarCita', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(fd)) });
+        const j = await r.json();
+        msg.textContent = j.message || (j.success ? 'Solicitud enviada.' : 'Error');
+        if (j.success) setTimeout(function () { location.reload(); }, 1200);
+    } catch (err) { msg.textContent = 'No se pudo completar la acción. Inténtalo de nuevo.'; }
+});
+</script>
+{% endblock %}

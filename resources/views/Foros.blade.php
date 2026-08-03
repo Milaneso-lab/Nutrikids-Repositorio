@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -624,7 +624,7 @@ function cargarDiscusiones() {
     .catch(error => {
         console.error('Error al cargar discusiones:', error);
         const container = document.getElementById('discussions-list');
-        container.innerHTML = '<p class="error-loading">Error al cargar las discusiones. Por favor, recarga la página.</p>';
+        container.innerHTML = '<p class="error-loading">No se pudieron cargar las discusiones. Inténtalo de nuevo.</p>';
     });
 }
 
@@ -884,7 +884,7 @@ if (discussionForm) {
         .catch(error => {
             mensajeCargandoDiscusion.style.display = 'none';
             console.error('Error:', error);
-            mensajeErrorDiscusion.textContent = 'Error de conexión. Por favor, inténtalo de nuevo.';
+            mensajeErrorDiscusion.textContent = 'No se pudo completar la acción. Inténtalo de nuevo.';
             mensajeErrorDiscusion.style.display = 'block';
             
             // Ocultar mensaje de error después de 8 segundos
@@ -1139,7 +1139,7 @@ form.addEventListener('submit', function(event) {
             if (contentType && contentType.includes("application/json")) {
                 return response.json().then(err => { throw err; });
             } else {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw { success: false };
             }
         }
         return response.json();
@@ -1188,27 +1188,7 @@ form.addEventListener('submit', function(event) {
         mensajeExito.style.display = 'none';
         
         console.error('Error:', error);
-        let displayError = 'Error de conexión. Por favor, inténtalo de nuevo.';
-        
-        // Si el error es un objeto con success, usar su mensaje
-        if (error && typeof error === 'object') {
-            if (error.success === false && error.message) {
-                displayError = error.message;
-            } else if (error.message) {
-                if (!error.message.includes('CSRF token mismatch')) {
-                    displayError = error.message;
-                }
-            }
-        } else if (typeof error === 'string') {
-            displayError = error;
-        }
-        
-        // No mostrar errores técnicos al usuario
-        if (displayError.includes('SQLSTATE') || displayError.includes('Unknown column') || displayError.includes('Connection')) {
-            displayError = 'Error al enviar el mensaje. Por favor, inténtalo de nuevo.';
-        }
-        
-        mensajeError.textContent = displayError;
+        mensajeError.textContent = (window.NutriKidsMessages ? NutriKidsMessages.fromCatch(error) : 'No se pudo completar la acción. Inténtalo de nuevo.');
         mensajeError.style.display = 'block';
         
         // Ocultar mensaje de error después de 8 segundos

@@ -5,68 +5,54 @@
 @section('page-title', 'Registrar Nuevo Paciente')
 
 @section('navigation')
-    <a href="{{ route('nutriologo.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-home"></i>
-        <span>Dashboard</span>
-    </a>
-    <a href="{{ route('nutriologo.pacientes.index') }}" class="flex items-center space-x-3 px-4 py-3 bg-green-500 rounded-lg text-white">
-        <i class="fas fa-child"></i>
-        <span>Pacientes</span>
-    </a>
-    <a href="{{ route('nutriologo.evaluaciones.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-clipboard-check"></i>
-        <span>Evaluaciones</span>
-    </a>
-    <a href="{{ route('nutriologo.menus.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-utensils"></i>
-        <span>Menús</span>
-    </a>
-    <a href="{{ route('nutriologo.reportes.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-green-500 rounded-lg transition">
-        <i class="fas fa-chart-bar"></i>
-        <span>Reportes</span>
-    </a>
+    @include('nutriologo.partials.navigation')
 @endsection
 
 @section('content')
     <div class="bg-white rounded-lg shadow-md p-6">
-        <form action="#" method="POST" class="space-y-6">
+        <form action="{{ route('nutriologo.pacientes.store') }}" method="POST" class="space-y-6">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del niño/a</label>
-                    <input type="text" name="nombre" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Ej: María" required>
+                    <input type="text" name="nombre" value="{{ old('nombre') }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Ej: María" required>
+                    @error('nombre')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Apellidos</label>
-                    <input type="text" name="apellidos" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Ej: González López">
+                    <input type="text" name="apellidos" value="{{ old('apellidos') }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Ej: González López">
+                    @error('apellidos')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de nacimiento</label>
-                    <input type="date" name="fecha_nacimiento" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" required>
+                    <input type="date" name="fecha_nacimiento" value="{{ old('fecha_nacimiento') }}" max="{{ now()->format('Y-m-d') }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" required>
+                    @error('fecha_nacimiento')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Sexo</label>
-                    <select name="sexo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                        <option value="">Seleccionar...</option>
-                        <option value="F">Femenino</option>
-                        <option value="M">Masculino</option>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Vincular con un niño registrado en la app
+                    </label>
+                    <select name="nino_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        <option value="">Sin vincular</option>
+                        @foreach ($ninos as $nino)
+                            <option value="{{ $nino->id }}" @selected(old('nino_id') == $nino->id)>
+                                {{ $nino->nombre_completo }} — nacido el {{ $nino->fecha_nacimiento?->format('d/m/Y') }}
+                            </option>
+                        @endforeach
                     </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del tutor o responsable</label>
-                    <input type="text" name="nombre_tutor" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Ej: Carlos González">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Correo del tutor</label>
-                    <input type="email" name="email_tutor" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="tutor@email.com">
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono de contacto</label>
-                    <input type="tel" name="telefono" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Ej: 55 1234 5678">
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Observaciones o notas</label>
-                    <textarea name="observaciones" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Alergias, condiciones especiales, etc."></textarea>
+                    @error('nino_id')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-2 text-sm text-gray-500">
+                        Al vincularlo, las mediciones y los planes que registres aquí se verán en la
+                        aplicación móvil del padre. Sólo aparecen los niños que aún no tienen expediente.
+                    </p>
                 </div>
             </div>
 
@@ -81,3 +67,4 @@
         </form>
     </div>
 @endsection
+

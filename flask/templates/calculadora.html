@@ -1,0 +1,637 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="">
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+    <script src="{{ url_for('static', filename='js/imc-cdc-lms.js') }}" defer></script>
+    <title>NutriKids - Cálculo de IMC Infantil</title>
+    <style>
+        /* Estilos para la calculadora */
+        .calculadora-section {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .calculadora-section h2 {
+            text-align: center;
+            color: var(--secondary-color);
+            margin-bottom: 25px;
+        }
+        
+        #form-imc {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        
+        button[type="submit"] {
+            grid-column: 1 / -1;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button[type="submit"]:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        #resultado-imc {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        #resultado-imc h3 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+        
+        #resultado-imc p {
+            margin: 5px 0;
+            color: #555;
+        }
+        
+        /* Estilos adicionales para los resultados */
+        .resultado-estado {
+            margin-bottom: 15px;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        
+        .resultado-estado h4 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .resultado-estado p {
+            margin: 0;
+            line-height: 1.5;
+        }
+        
+        .datos-calculo {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .datos-calculo p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .nota-importante {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .nota-importante p {
+            margin: 0;
+            color: #1976d2;
+            font-size: 14px;
+        }
+        
+        /* Estilos para mensajes de error */
+        .error-message {
+            display: none;
+            color: #d32f2f;
+            font-size: 12px;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input.error,
+        .form-group select.error {
+            border-color: #d32f2f;
+            background-color: #ffebee;
+        }
+        
+        .form-group input:invalid,
+        .form-group select:invalid {
+            border-color: #d32f2f;
+        }
+    </style>
+</head>
+<body class="public-site">
+    {% set active_page = 'calculadora' %}
+    {% include 'partials/public_header.html' %}
+<section class="calculadora-section">
+        <h2>Calculadora de IMC Infantil</h2>
+        <form id="form-imc">
+            <div class="form-group">
+                <label>Edad (años completos):</label>
+                <input type="number" name="edad_anos" placeholder="Ej: 8" min="2" max="19" step="1" required title="De 2 a 19 años (hasta 20 años solo con 0 meses adicionales)">
+                <small class="error-message" id="error-edad_anos" style="display: none; color: #d32f2f; font-size: 12px;"></small>
+            </div>
+
+            <div class="form-group">
+                <label>Meses adicionales:</label>
+                <input type="number" name="edad_meses" placeholder="0–11" min="0" max="11" step="1" value="0" required title="Meses desde el último cumpleaños (0 a 11)">
+                <small class="error-message" id="error-edad_meses" style="display: none; color: #d32f2f; font-size: 12px;"></small>
+            </div>
+
+            <div class="form-group">
+                <label>Sexo biológico (referencia de tablas):</label>
+                <select name="sexo" required>
+                    <option value="" disabled selected>Seleccione</option>
+                    <option value="femenino">Femenino</option>
+                    <option value="masculino">Masculino</option>
+                </select>
+                <small class="error-message" id="error-sexo" style="display: none; color: #d32f2f; font-size: 12px;"></small>
+            </div>
+
+            <div class="form-group">
+                <label>Altura (cm):</label>
+                <input type="number" name="altura" placeholder="Ej: 120" min="50" max="250" step="0.1" required>
+                <small class="error-message" id="error-altura" style="display: none; color: #d32f2f; font-size: 12px;"></small>
+            </div>
+
+            <div class="form-group">
+                <label>Peso (kg):</label>
+                <input type="number" name="peso" placeholder="Ej: 25" min="5" max="200" step="0.1" required>
+                <small class="error-message" id="error-peso" style="display: none; color: #d32f2f; font-size: 12px;"></small>
+            </div>
+
+            <button type="submit">Calcular IMC</button>
+        </form>
+
+        <div id="resultado-imc"></div>
+    </section>
+
+            <script>
+        function imcErf(x) {
+            var sign = x < 0 ? -1 : 1;
+            x = Math.abs(x);
+            var a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+            var t = 1 / (1 + p * x);
+            var y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            return sign * y;
+        }
+        function imcNormalCDF(z) { return 0.5 * (1 + imcErf(z / Math.sqrt(2))); }
+        function imcInterpLMS(ageMonths, sexKey) {
+            var d = window.IMC_CDC_LMS && window.IMC_CDC_LMS[sexKey];
+            if (!d) return null;
+            var a = d.agemos, x = ageMonths;
+            if (x < a[0] || x > a[a.length - 1]) return null;
+            var i = 0;
+            while (i < a.length - 2 && a[i + 1] < x) i++;
+            var t = (x - a[i]) / (a[i + 1] - a[i]);
+            function lp(arr) { return arr[i] + t * (arr[i + 1] - arr[i]); }
+            return { L: lp(d.L), M: lp(d.M), S: lp(d.S) };
+        }
+        function imcBmiZScore(bmi, L, M, S) {
+            if (Math.abs(L) < 1e-6) return Math.log(bmi / M) / S;
+            return (Math.pow(bmi / M, L) - 1) / (L * S);
+        }
+        function imcClasificarCDC(bmip) {
+            if (bmip < 5) {
+                return { estado: 'Bajo peso para la edad', descripcion: 'IMC por debajo del percentil 5 (referencia CDC, niños y adolescentes 2–20 años). Se recomienda valoración con pediatra o nutricionista.', color: '#c62828' };
+            }
+            if (bmip < 85) {
+                return { estado: 'Peso saludable', descripcion: 'IMC entre los percentiles 5 y 85: rango habitual de peso adecuado para la edad según la misma referencia.', color: '#2e7d32' };
+            }
+            if (bmip < 95) {
+                return { estado: 'Sobrepeso', descripcion: 'IMC entre los percentiles 85 y 95. Conviene seguimiento médico y revisión de alimentación y actividad física.', color: '#ef6c00' };
+            }
+            var extra = bmip >= 99 ? ' Percentil muy elevado; priorizar valoración clínica.' : '';
+            return { estado: 'Obesidad', descripcion: 'IMC en o por encima del percentil 95.' + extra + ' Requiere valoración profesional.', color: '#b71c1c' };
+        }
+        function imcLimpiarErrores() {
+            document.querySelectorAll('#form-imc .error-message').forEach(function (msg) { msg.style.display = 'none'; });
+            document.querySelectorAll('#form-imc input, #form-imc select').forEach(function (inp) { inp.classList.remove('error'); });
+        }
+        function imcMostrarError(campo, mensaje) {
+            var err = document.getElementById('error-' + campo);
+            var inp = document.querySelector('#form-imc [name="' + campo + '"]');
+            if (!err || !inp) return;
+            err.textContent = mensaje;
+            err.style.display = 'block';
+            inp.classList.add('error');
+        }
+        function imcValidarEdadMeses(anos, meses) {
+            if (isNaN(anos) || isNaN(meses)) return { ok: false, msg: 'Indica edad válida' };
+            if (meses < 0 || meses > 11) return { ok: false, msg: 'Los meses adicionales deben ser de 0 a 11' };
+            if (anos < 2 || anos > 19) return { ok: false, msg: 'La edad en años debe estar entre 2 y 19' };
+            var total = anos * 12 + meses;
+            if (total < 24 || total > 239) return { ok: false, msg: 'Edad fuera del rango con tablas (aprox. 2 años a 19 años 11 meses)' };
+            return { ok: true, totalMonths: total };
+        }
+        function imcValidarTodo() {
+            var ok = true;
+            imcLimpiarErrores();
+            var anos = parseInt(document.querySelector('#form-imc input[name="edad_anos"]').value, 10);
+            var meses = parseInt(document.querySelector('#form-imc input[name="edad_meses"]').value, 10);
+            var ve = imcValidarEdadMeses(anos, meses);
+            if (!ve.ok) { imcMostrarError('edad_anos', ve.msg); imcMostrarError('edad_meses', ve.msg); ok = false; }
+            var sexo = document.querySelector('#form-imc select[name="sexo"]').value;
+            if (!sexo) { imcMostrarError('sexo', 'Seleccione sexo'); ok = false; }
+            var altura = parseFloat(document.querySelector('#form-imc input[name="altura"]').value);
+            if (isNaN(altura) || altura < 50 || altura > 250) { imcMostrarError('altura', 'Altura entre 50 y 250 cm'); ok = false; }
+            var peso = parseFloat(document.querySelector('#form-imc input[name="peso"]').value);
+            if (isNaN(peso) || peso < 5 || peso > 200) { imcMostrarError('peso', 'Peso entre 5 y 200 kg'); ok = false; }
+            return ok;
+        }
+        function imcSexKey(sexo) { return sexo === 'masculino' ? '1' : '2'; }
+        document.querySelector('#form-imc input[name="edad_anos"]').addEventListener('input', function () {
+            var v = parseInt(this.value, 10);
+            var el = document.getElementById('error-edad_anos');
+            if (isNaN(v) || v < 2 || v > 19) { el.textContent = 'Entre 2 y 19 años'; el.style.display = 'block'; this.classList.add('error'); }
+            else { el.style.display = 'none'; this.classList.remove('error'); }
+        });
+        document.querySelector('#form-imc input[name="edad_meses"]').addEventListener('input', function () {
+            var v = parseInt(this.value, 10);
+            var el = document.getElementById('error-edad_meses');
+            if (isNaN(v) || v < 0 || v > 11) { el.textContent = 'Entre 0 y 11'; el.style.display = 'block'; this.classList.add('error'); }
+            else { el.style.display = 'none'; this.classList.remove('error'); }
+        });
+        document.querySelector('#form-imc select[name="sexo"]').addEventListener('change', function () {
+            var el = document.getElementById('error-sexo');
+            if (!this.value) { el.textContent = 'Seleccione'; el.style.display = 'block'; this.classList.add('error'); }
+            else { el.style.display = 'none'; this.classList.remove('error'); }
+        });
+        document.querySelector('#form-imc input[name="altura"]').addEventListener('input', function () {
+            var v = parseFloat(this.value);
+            var el = document.getElementById('error-altura');
+            if (isNaN(v) || v < 50 || v > 250) { el.textContent = 'Entre 50 y 250 cm'; el.style.display = 'block'; this.classList.add('error'); }
+            else { el.style.display = 'none'; this.classList.remove('error'); }
+        });
+        document.querySelector('#form-imc input[name="peso"]').addEventListener('input', function () {
+            var v = parseFloat(this.value);
+            var el = document.getElementById('error-peso');
+            if (isNaN(v) || v < 5 || v > 200) { el.textContent = 'Entre 5 y 200 kg'; el.style.display = 'block'; this.classList.add('error'); }
+            else { el.style.display = 'none'; this.classList.remove('error'); }
+        });
+        document.getElementById('form-imc').addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (!window.IMC_CDC_LMS) {
+                document.getElementById('resultado-imc').innerHTML = '<p style="color:#b71c1c;">No se pudo calcular el IMC. Inténtalo de nuevo.</p>';
+                return;
+            }
+            if (!imcValidarTodo()) return;
+            var anos = parseInt(document.querySelector('#form-imc input[name="edad_anos"]').value, 10);
+            var meses = parseInt(document.querySelector('#form-imc input[name="edad_meses"]').value, 10);
+            var totalMonths = anos * 12 + meses;
+            var sexo = document.querySelector('#form-imc select[name="sexo"]').value;
+            var altura = parseFloat(document.querySelector('#form-imc input[name="altura"]').value);
+            var peso = parseFloat(document.querySelector('#form-imc input[name="peso"]').value);
+            var alturaM = altura / 100;
+            var imc = peso / (alturaM * alturaM);
+            var lms = imcInterpLMS(totalMonths, imcSexKey(sexo));
+            if (!lms) {
+                document.getElementById('resultado-imc').innerHTML = '<p style="color:#b71c1c;">No hay datos de referencia para esta edad. Prueba con otra edad.</p>';
+                return;
+            }
+            var z = imcBmiZScore(imc, lms.L, lms.M, lms.S);
+            var bmip = imcNormalCDF(z) * 100;
+            var c = imcClasificarCDC(bmip);
+            var pctTxt = bmip < 0.1 ? '<0.1' : (bmip > 99.9 ? '> 99.9' : bmip.toFixed(1));
+            document.getElementById('resultado-imc').innerHTML =
+                '<h3>Resultado del cálculo</h3>' +
+                '<div class="resultado-estado" style="background-color:' + c.color + '22;border-left:4px solid ' + c.color + ';">' +
+                '<h4 style="color:' + c.color + ';">' + c.estado + '</h4><p>' + c.descripcion + '</p></div>' +
+                '<div class="datos-calculo">' +
+                '<p><strong>IMC:</strong> ' + imc.toFixed(2) + ' kg/m²</p>' +
+                '<p><strong>Percentil aproximado (IMC para la edad):</strong> ' + pctTxt + '</p>' +
+                '<p><strong>Puntuación Z aproximada:</strong> ' + z.toFixed(2) + '</p>' +
+                '<p><strong>Edad usada:</strong> ' + anos + ' años y ' + meses + ' meses (' + totalMonths + ' meses)</p>' +
+                '<p><strong>Sexo (tablas):</strong> ' + (sexo === 'masculino' ? 'Niño' : 'Niña') + '</p>' +
+                '<p><strong>Peso:</strong> ' + peso + ' kg &nbsp;|&nbsp; <strong>Talla:</strong> ' + altura + ' cm</p>' +
+                '<p style="font-size:13px;color:#555;margin-top:10px;">Clasificación según puntos de corte pediátricos habituales (P5, P85, P95) sobre curvas CDC2000, edad en meses. En vigilancia oficial de otros países pueden usarse también estándares OMS; siempre confirme con su equipo de salud.</p>' +
+                '</div>' +
+                '<div class="nota-importante"><p><strong>Importante:</strong> Esto no sustituye la valoración clínica. En niños el IMC siempre se interpreta con edad y sexo; los rangos de adultos (18.5–25) no aplican.</p></div>';
+        });
+        </script>
+    
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="contacto">
+                <h3>Contáctanos</h3>
+                <form id="contactoForm" action="{{ url_for('insertar_contacto') }}" method="post">
+                    <input type="text" name="nombre" placeholder="Nombre" required maxlength="50" pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo letras y espacios permitidos">
+                    <input type="text" name="apellido" placeholder="Apellido" required maxlength="50" pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo letras y espacios permitidos">
+                    <input type="email" name="email" placeholder="Email" required maxlength="100" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Ingrese un email válido (ejemplo: usuario@dominio.com)">
+                    <textarea name="mensaje" placeholder="Mensaje" required maxlength="500" minlength="10" title="El mensaje debe tener entre 10 y 500 caracteres"></textarea>
+                    <button type="submit" id="btnEnviar">Enviar</button>
+                    <div id="mensajeExito" style="display:none; color: var(--primary-color); margin-top: 10px; font-weight: bold; padding: 10px; background-color: #d4edda; border-radius: 5px;"></div>
+                    <div id="mensajeError" style="display:none; color: #721c24; margin-top: 10px; font-weight: bold; padding: 10px; background-color: #f8d7da; border-radius: 5px;"></div>
+                    <div id="mensajeCargando" style="display:none; color: #856404; margin-top: 10px; font-weight: bold; padding: 10px; background-color: #fff3cd; border-radius: 5px;">Enviando mensaje...</div>
+                </form>
+            </div>
+    
+            <div class="info">
+                <h3>Teléfono</h3>
+                <p>55 3908 5006 - Soporte Técnico</p>
+                <p>442 776 3385 - Soporte Técnico</p>
+                <p>442 545 1626 - Contacto Nutrióloga</p>
+    
+                <h3>Dirección</h3>
+                <p>Carretera Estatal 420 S/N, El Rosario</p>
+                <p>Santiago de Querétaro, Qro</p>
+            </div>
+    
+            <div class="redes">
+                <h3>Síguenos</h3>
+                <a href="#"><img src="{{ url_for('static', filename='Imagenes/2023_Facebook_icon.svg.png') }}" alt="Facebook"></a>
+                <a href="#"><img src="{{ url_for('static', filename='Imagenes/instagramlogo.png') }}" alt="Instagram"></a>
+                <a href="#"><img src="{{ url_for('static', filename='Imagenes/Logo_of_Twitter.svg.png') }}" alt="Twitter"></a>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+// Función para validar email
+function validarEmail(email) {
+    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return regex.test(email);
+}
+
+// Función para validar solo letras y espacios
+function validarSoloLetras(texto) {
+    const regex = /^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/;
+    return regex.test(texto);
+}
+
+// Función para mostrar errores de validación
+function mostrarError(campo, mensaje) {
+    const input = document.querySelector(`[name="${campo}"]`);
+    input.style.borderColor = '#d32f2f';
+    input.style.backgroundColor = '#ffebee';
+    
+    // Crear o actualizar mensaje de error
+    let errorDiv = document.getElementById(`error-${campo}`);
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = `error-${campo}`;
+        errorDiv.style.color = '#d32f2f';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        input.parentNode.insertBefore(errorDiv, input.nextSibling);
+    }
+    errorDiv.textContent = mensaje;
+    errorDiv.style.display = 'block';
+}
+
+// Función para limpiar errores
+function limpiarError(campo) {
+    const input = document.querySelector(`[name="${campo}"]`);
+    input.style.borderColor = '';
+    input.style.backgroundColor = '';
+    
+    const errorDiv = document.getElementById(`error-${campo}`);
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
+}
+
+// Validaciones en tiempo real
+document.querySelector('input[name="nombre"]').addEventListener('input', function() {
+    const valor = this.value.trim();
+    if (valor.length === 0) {
+        mostrarError('nombre', 'El nombre es requerido');
+    } else if (!validarSoloLetras(valor)) {
+        mostrarError('nombre', 'Solo se permiten letras y espacios');
+    } else if (valor.length < 2) {
+        mostrarError('nombre', 'El nombre debe tener al menos 2 caracteres');
+    } else {
+        limpiarError('nombre');
+    }
+});
+
+document.querySelector('input[name="apellido"]').addEventListener('input', function() {
+    const valor = this.value.trim();
+    if (valor.length === 0) {
+        mostrarError('apellido', 'El apellido es requerido');
+    } else if (!validarSoloLetras(valor)) {
+        mostrarError('apellido', 'Solo se permiten letras y espacios');
+    } else if (valor.length < 2) {
+        mostrarError('apellido', 'El apellido debe tener al menos 2 caracteres');
+    } else {
+        limpiarError('apellido');
+    }
+});
+
+document.querySelector('input[name="email"]').addEventListener('input', function() {
+    const valor = this.value.trim();
+    if (valor.length === 0) {
+        mostrarError('email', 'El email es requerido');
+    } else if (!validarEmail(valor)) {
+        mostrarError('email', 'Ingrese un email válido (ejemplo: usuario@dominio.com)');
+    } else {
+        limpiarError('email');
+    }
+});
+
+document.querySelector('textarea[name="mensaje"]').addEventListener('input', function() {
+    const valor = this.value.trim();
+    if (valor.length === 0) {
+        mostrarError('mensaje', 'El mensaje es requerido');
+    } else if (valor.length < 10) {
+        mostrarError('mensaje', 'El mensaje debe tener al menos 10 caracteres');
+    } else if (valor.length > 500) {
+        mostrarError('mensaje', 'El mensaje no puede exceder 500 caracteres');
+    } else {
+        limpiarError('mensaje');
+    }
+});
+
+// Función para validar todo el formulario
+function validarFormulario() {
+    const nombre = document.querySelector('input[name="nombre"]').value.trim();
+    const apellido = document.querySelector('input[name="apellido"]').value.trim();
+    const email = document.querySelector('input[name="email"]').value.trim();
+    const mensaje = document.querySelector('textarea[name="mensaje"]').value.trim();
+    
+    let esValido = true;
+    
+    // Validar nombre
+    if (nombre.length === 0) {
+        mostrarError('nombre', 'El nombre es requerido');
+        esValido = false;
+    } else if (!validarSoloLetras(nombre)) {
+        mostrarError('nombre', 'Solo se permiten letras y espacios');
+        esValido = false;
+    } else if (nombre.length < 2) {
+        mostrarError('nombre', 'El nombre debe tener al menos 2 caracteres');
+        esValido = false;
+    }
+    
+    // Validar apellido
+    if (apellido.length === 0) {
+        mostrarError('apellido', 'El apellido es requerido');
+        esValido = false;
+    } else if (!validarSoloLetras(apellido)) {
+        mostrarError('apellido', 'Solo se permiten letras y espacios');
+        esValido = false;
+    } else if (apellido.length < 2) {
+        mostrarError('apellido', 'El apellido debe tener al menos 2 caracteres');
+        esValido = false;
+    }
+    
+    // Validar email
+    if (email.length === 0) {
+        mostrarError('email', 'El email es requerido');
+        esValido = false;
+    } else if (!validarEmail(email)) {
+        mostrarError('email', 'Ingrese un email válido (ejemplo: usuario@dominio.com)');
+        esValido = false;
+    }
+    
+    // Validar mensaje
+    if (mensaje.length === 0) {
+        mostrarError('mensaje', 'El mensaje es requerido');
+        esValido = false;
+    } else if (mensaje.length < 10) {
+        mostrarError('mensaje', 'El mensaje debe tener al menos 10 caracteres');
+        esValido = false;
+    } else if (mensaje.length > 500) {
+        mostrarError('mensaje', 'El mensaje no puede exceder 500 caracteres');
+        esValido = false;
+    }
+    
+    return esValido;
+}
+
+// Script para manejar el envío del formulario de contacto por AJAX
+const form = document.getElementById('contactoForm');
+const mensajeExito = document.getElementById('mensajeExito');
+const mensajeError = document.getElementById('mensajeError');
+const mensajeCargando = document.getElementById('mensajeCargando');
+const btnEnviar = document.getElementById('btnEnviar');
+
+form.addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevenir envío normal del formulario
+    
+    // Validar formulario antes de enviar
+    if (!validarFormulario()) {
+        return;
+    }
+    
+    // Ocultar mensajes anteriores
+    mensajeExito.style.display = 'none';
+    mensajeError.style.display = 'none';
+    mensajeCargando.style.display = 'block';
+    btnEnviar.disabled = true;
+    
+    // Obtener datos del formulario
+    const formData = new FormData(form);
+    
+    // Obtener token CSRF
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+    
+    // Enviar datos por AJAX
+    fetch({{ url_for('insertar_contacto')|tojson }}, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfToken
+        },
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                return response.json().then(err => { throw err; });
+            } else {
+                throw { success: false };
+            }
+        }
+        return response.json();
+    })
+    .then(data => {
+        mensajeCargando.style.display = 'none';
+        btnEnviar.disabled = false;
+        
+        if (data.success) {
+            // Éxito
+            mensajeExito.textContent = data.message;
+            mensajeExito.style.display = 'block';
+            form.reset(); // Limpiar formulario
+            
+            // Limpiar todos los errores
+            ['nombre', 'apellido', 'email', 'mensaje'].forEach(campo => {
+                limpiarError(campo);
+            });
+            
+            // Ocultar mensaje de éxito después de 5 segundos
+            setTimeout(() => {
+                mensajeExito.style.display = 'none';
+            }, 5000);
+        } else {
+            // Error
+            let errorMsg = data.message;
+            if (data.errors && data.errors.length > 0) {
+                errorMsg += ': ' + data.errors.join(', ');
+            }
+            mensajeError.textContent = errorMsg;
+            mensajeError.style.display = 'block';
+            
+            // Ocultar mensaje de error después de 8 segundos
+            setTimeout(() => {
+                mensajeError.style.display = 'none';
+            }, 8000);
+        }
+    })
+    .catch(error => {
+        mensajeCargando.style.display = 'none';
+        btnEnviar.disabled = false;
+        
+        console.error('Error:', error);
+        mensajeError.textContent = (window.NutriKidsMessages ? NutriKidsMessages.fromCatch(error) : 'No se pudo completar la acción. Inténtalo de nuevo.');
+        mensajeError.style.display = 'block';
+        
+        // Ocultar mensaje de error después de 8 segundos
+        setTimeout(() => {
+            mensajeError.style.display = 'none';
+        }, 8000);
+    });
+});
+</script>
+</body>
+</html>

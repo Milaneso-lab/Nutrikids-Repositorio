@@ -2,83 +2,69 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\Role;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class CredencialesSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    /** Credenciales oficiales de prueba — Fase 6 */
+    public const USERS = [
+        [
+            'nombre' => 'Administrador',
+            'apellido_paterno' => 'Sistema',
+            'apellido_materno' => 'NutriKids',
+            'email' => 'admin@nutrikids.com',
+            'contrasena' => 'Admin123*',
+            'rol' => 'admin',
+        ],
+        [
+            'nombre' => 'Sandra',
+            'apellido_paterno' => 'Olmos',
+            'apellido_materno' => 'García',
+            'email' => 'nutriologo@nutrikids.com',
+            'contrasena' => 'Nutri123*',
+            'rol' => 'nutriologo',
+        ],
+        [
+            'nombre' => 'Carlos',
+            'apellido_paterno' => 'Ramírez',
+            'apellido_materno' => 'López',
+            'email' => 'padre@nutrikids.com',
+            'contrasena' => 'Padre123*',
+            'rol' => 'padre',
+        ],
+    ];
+
     public function run(): void
     {
-        // Administrador
-        $admin = User::where('email', 'admin@nutrikids.com')->first();
-        if (!$admin) {
-            User::create([
-                'nombre' => 'Administrador',
-                'apellido_paterno' => 'Sistema',
-                'apellido_materno' => 'NutriKids',
-                'email' => 'admin@nutrikids.com',
-                'contrasena' => Hash::make('admin123'),
-                'rol' => 'admin',
-            ]);
-        } else {
-            $admin->update([
-                'rol' => 'admin',
-                'contrasena' => Hash::make('admin123'),
-            ]);
+        foreach (self::USERS as $data) {
+            $user = User::firstOrNew(['email' => $data['email']]);
+            $user->nombre = $data['nombre'];
+            $user->apellido_paterno = $data['apellido_paterno'];
+            $user->apellido_materno = $data['apellido_materno'];
+            $user->rol = $data['rol'];
+            $user->contrasena = Hash::make($data['contrasena']);
+
+            if (Schema::hasColumn('usuarios', 'estado')) {
+                $user->estado = 'activo';
+            }
+
+            if (Schema::hasColumn('usuarios', 'rol_id') && Schema::hasTable('roles')) {
+                $role = Role::where('nombre', $data['rol'])->first();
+                if ($role) {
+                    $user->rol_id = $role->id;
+                }
+            }
+
+            $user->save();
         }
 
-        // Nutriólogo
-        $nutriologo = User::where('email', 'nutriologo@nutrikids.com')->first();
-        if (!$nutriologo) {
-            User::create([
-                'nombre' => 'Sandra',
-                'apellido_paterno' => 'Olmos',
-                'apellido_materno' => 'García',
-                'email' => 'nutriologo@nutrikids.com',
-                'contrasena' => Hash::make('nutriologo123'),
-                'rol' => 'nutriologo',
-            ]);
-        } else {
-            $nutriologo->update([
-                'rol' => 'nutriologo',
-                'contrasena' => Hash::make('nutriologo123'),
-            ]);
-        }
-
-        // Padre (usuario normal)
-        $padre = User::where('email', 'padre@nutrikids.com')->first();
-        if (!$padre) {
-            User::create([
-                'nombre' => 'Carlos',
-                'apellido_paterno' => 'Ramírez',
-                'apellido_materno' => 'López',
-                'email' => 'padre@nutrikids.com',
-                'contrasena' => Hash::make('padre123'),
-                'rol' => 'padre',
-            ]);
-        } else {
-            $padre->update([
-                'rol' => 'padre',
-                'contrasena' => Hash::make('padre123'),
-            ]);
-        }
-
-        $this->command->info('✓ Credenciales creadas exitosamente:');
-        $this->command->info('');
-        $this->command->info('ADMINISTRADOR:');
-        $this->command->info('  Email: admin@nutrikids.com');
-        $this->command->info('  Contraseña: admin123');
-        $this->command->info('');
-        $this->command->info('NUTRIÓLOGO:');
-        $this->command->info('  Email: nutriologo@nutrikids.com');
-        $this->command->info('  Contraseña: nutriologo123');
-        $this->command->info('');
-        $this->command->info('PADRE:');
-        $this->command->info('  Email: padre@nutrikids.com');
-        $this->command->info('  Contraseña: padre123');
+        $this->command?->info('✓ Usuarios de prueba Fase 6 creados/actualizados:');
+        $this->command?->info('  admin@nutrikids.com / Admin123* (Administrador)');
+        $this->command?->info('  nutriologo@nutrikids.com / Nutri123* (Nutriólogo)');
+        $this->command?->info('  padre@nutrikids.com / Padre123* (Padre)');
     }
 }

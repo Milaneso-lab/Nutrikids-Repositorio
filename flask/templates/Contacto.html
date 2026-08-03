@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="">
+    <title>Contacto - NutriKids</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+    <script src="{{ url_for('static', filename='js/session.js') }}"></script>
+</head>
+<body class="public-site">
+    {% set active_page = 'index' %}
+    {% include 'partials/public_header.html' %}
+
+    <main class="contacto-page">
+        <h1>Cont&aacute;ctanos</h1>
+        <p>Escr&iacute;benos y te responderemos lo antes posible.</p>
+
+        <form id="contactoForm" action="{{ url_for('insertar_contacto') }}" method="post">
+            <input type="text" id="nombre" name="nombre" required placeholder="Nombre" maxlength="50" pattern="[A-Za-z\u00C0-\u024F\s]+" title="Solo letras y espacios permitidos">
+            <input type="text" id="apellido" name="apellido" required placeholder="Apellido" maxlength="50" pattern="[A-Za-z\u00C0-\u024F\s]+" title="Solo letras y espacios permitidos">
+            <input type="email" id="email" name="email" required placeholder="Correo electr&oacute;nico" maxlength="100" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Ingrese un email v&aacute;lido">
+            <textarea id="mensaje" name="mensaje" required placeholder="Mensaje" maxlength="500" minlength="10" title="El mensaje debe tener entre 10 y 500 caracteres"></textarea>
+            <button type="submit" id="btnEnviar">Enviar</button>
+            <div id="mensajeExito" class="form-feedback form-feedback--success" style="display:none;"></div>
+            <div id="mensajeError" class="form-feedback form-feedback--error" style="display:none;"></div>
+            <div id="mensajeCargando" class="form-feedback form-feedback--loading" style="display:none;">Enviando mensaje...</div>
+        </form>
+    </main>
+
+    <script>
+function validarEmail(email) {
+    var regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return regex.test(email);
+}
+
+function validarSoloLetras(texto) {
+    var regex = /^[A-Za-z\u00C0-\u024F\s]+$/;
+    return regex.test(texto);
+}
+
+function mostrarError(campo, mensaje) {
+    var input = document.getElementById(campo);
+    input.style.borderColor = 'var(--error-color)';
+    input.style.backgroundColor = '#ffebee';
+
+    var errorDiv = document.getElementById('error-' + campo);
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'error-' + campo;
+        errorDiv.style.color = 'var(--error-color)';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        input.parentNode.insertBefore(errorDiv, input.nextSibling);
+    }
+    errorDiv.textContent = mensaje;
+    errorDiv.style.display = 'block';
+}
+
+function limpiarError(campo) {
+    var input = document.getElementById(campo);
+    input.style.borderColor = '';
+    input.style.backgroundColor = '';
+
+    var errorDiv = document.getElementById('error-' + campo);
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
+}
+
+['nombre', 'apellido', 'email', 'mensaje'].forEach(function(campo) {
+    document.getElementById(campo).addEventListener('input', function() {
+        var valor = this.value.trim();
+        if (campo === 'email') {
+            if (valor.length === 0) mostrarError(campo, 'El email es requerido');
+            else if (!validarEmail(valor)) mostrarError(campo, 'Ingrese un email valido');
+            else limpiarError(campo);
+        } else if (campo === 'mensaje') {
+            if (valor.length === 0) mostrarError(campo, 'El mensaje es requerido');
+            else if (valor.length < 10) mostrarError(campo, 'El mensaje debe tener al menos 10 caracteres');
+            else if (valor.length > 500) mostrarError(campo, 'El mensaje no puede exceder 500 caracteres');
+            else limpiarError(campo);
+        } else {
+            if (valor.length === 0) mostrarError(campo, 'Este campo es requerido');
+            else if (!validarSoloLetras(valor)) mostrarError(campo, 'Solo se permiten letras y espacios');
+            else if (valor.length < 2) mostrarError(campo, 'Debe tener al menos 2 caracteres');
+            else limpiarError(campo);
+        }
+    });
+});
+
+function validarFormulario() {
+    var esValido = true;
+    ['nombre', 'apellido'].forEach(function(campo) {
+        var valor = document.getElementById(campo).value.trim();
+        if (valor.length < 2 || !validarSoloLetras(valor)) {
+            mostrarError(campo, 'Completa este campo correctamente');
+            esValido = false;
+        }
+    });
+    var email = document.getElementById('email').value.trim();
+    if (!validarEmail(email)) {
+        mostrarError('email', 'Ingrese un email valido');
+        esValido = false;
+    }
+    var mensaje = document.getElementById('mensaje').value.trim();
+    if (mensaje.length < 10 || mensaje.length > 500) {
+        mostrarError('mensaje', 'El mensaje debe tener entre 10 y 500 caracteres');
+        esValido = false;
+    }
+    return esValido;
+}
+
+var form = document.getElementById('contactoForm');
+var mensajeExito = document.getElementById('mensajeExito');
+var mensajeError = document.getElementById('mensajeError');
+var mensajeCargando = document.getElementById('mensajeCargando');
+var btnEnviar = document.getElementById('btnEnviar');
+
+form.addEventListener('submit', function(event) {
+    event.preventDefault();
+    if (!validarFormulario()) return;
+
+    mensajeExito.style.display = 'none';
+    mensajeError.style.display = 'none';
+    mensajeCargando.style.display = 'block';
+    btnEnviar.disabled = true;
+
+    var formData = new FormData(form);
+    var csrfToken = document.querySelector('meta[name="csrf-token"]');
+    csrfToken = csrfToken ? csrfToken.content : '';
+
+    fetch({{ url_for('insertar_contacto')|tojson }}, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfToken
+        },
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            var contentType = response.headers.get('content-type');
+            if (contentType && contentType.indexOf('application/json') !== -1) {
+                return response.json().then(function(err) { throw err; });
+            }
+            throw { success: false };
+        }
+        return response.json();
+    })
+    .then(function(data) {
+        mensajeCargando.style.display = 'none';
+        btnEnviar.disabled = false;
+
+        if (data.success) {
+            mensajeExito.textContent = data.message;
+            mensajeExito.style.display = 'block';
+            form.reset();
+            ['nombre', 'apellido', 'email', 'mensaje'].forEach(limpiarError);
+            setTimeout(function() { mensajeExito.style.display = 'none'; }, 5000);
+        } else {
+            var errorMsg = data.message;
+            if (data.errors && data.errors.length > 0) {
+                errorMsg += ': ' + data.errors.join(', ');
+            }
+            mensajeError.textContent = errorMsg;
+            mensajeError.style.display = 'block';
+            setTimeout(function() { mensajeError.style.display = 'none'; }, 8000);
+        }
+    })
+    .catch(function(error) {
+        mensajeCargando.style.display = 'none';
+        btnEnviar.disabled = false;
+        mensajeError.textContent = (window.NutriKidsMessages ? NutriKidsMessages.fromCatch(error) : 'No se pudo completar la acción. Inténtalo de nuevo.');
+        mensajeError.style.display = 'block';
+        setTimeout(function() { mensajeError.style.display = 'none'; }, 8000);
+    });
+});
+    </script>
+</body>
+</html>

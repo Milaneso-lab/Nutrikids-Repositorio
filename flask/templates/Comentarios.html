@@ -1,0 +1,607 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="">
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+    <title>NutriKids - Comentarios</title>
+    <style>
+        /* Estilos para la sección de comentarios */
+        .comentarios-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin: 30px auto;
+            max-width: 1200px;
+        }
+        
+        .formulario-comentario {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .lista-comentarios {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .comentario {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .comentario-info h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        
+        .comentario-info h4 span {
+            font-weight: normal;
+            color: var(--text-light);
+            font-size: 0.9em;
+        }
+        
+        .comentario-info p {
+            margin: 0;
+            color: #444;
+            line-height: 1.5;
+            max-height: 4.5em; /* Limita a 3 líneas aproximadamente */
+            overflow: hidden;
+            position: relative;
+            transition: max-height 0.3s ease;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .comentario-info p.expanded {
+            max-height: none;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .comentario-info p::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 50px;
+            height: 1.5em;
+            background: linear-gradient(to right, transparent, white);
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        
+        .comentario-info p.expanded::after {
+            opacity: 0;
+        }
+        
+        .btn-leer-mas {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-top: 5px;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+        
+        .btn-leer-mas:hover {
+            color: var(--primary-dark);
+        }
+        
+        .btn-leer-mas.hidden {
+            display: none;
+        }
+        
+        /* Modal para ver comentario completo */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.38);
+            backdrop-filter: blur(3px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .modal-title {
+            color: var(--secondary-color);
+            font-size: 1.4em;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 5px;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            background-color: var(--bg-gray-100);
+            color: #333;
+        }
+        
+        .modal-body {
+            color: var(--text-medium);
+            line-height: 1.7;
+            font-size: 1.1em;
+            text-align: justify;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
+        
+        .modal-footer {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .comentario-info p {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .comentario-info p:hover {
+            background-color: rgba(76, 175, 80, 0.05);
+        }
+        
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+    </style>
+</head>
+<body class="public-site">
+    {% set active_page = 'comentarios' %}
+    {% include 'partials/public_header.html' %}
+<section class="comentarios-container">
+        <!-- Parte izquierda: Formulario para escribir comentarios -->
+        <div class="formulario-comentario">
+            <h2>Escribe tu comentario</h2>
+            {% if session.get('rol') == 'padre' %}
+                    <form id="form-comentario" action="{{ url_for('insertar_comentario') }}" method="post">
+                        <textarea id="comentario" name="comentario" required placeholder="Escribe tu comentario aquí..." maxlength="1000" minlength="5" title="El comentario debe tener entre 5 y 1000 caracteres"></textarea>
+                        <button type="submit" id="btnComentar">Comentar</button>
+                        <div id="mensajeExitoComentario" style="display:none; color: var(--primary-color); margin-top: 10px; font-weight: bold; padding: 10px; background-color: #d4edda; border-radius: 5px;"></div>
+                        <div id="mensajeErrorComentario" style="display:none; color: #721c24; margin-top: 10px; font-weight: bold; padding: 10px; background-color: #f8d7da; border-radius: 5px;"></div>
+                        <div id="mensajeCargandoComentario" style="display:none; color: #856404; margin-top: 10px; font-weight: bold; padding: 10px; background-color: #fff3cd; border-radius: 5px;">Enviando comentario...</div>
+                    </form>
+                    <p style="color: #555; font-size: 14px; margin-top: 12px;">Tu comentario será visible para todos en &quot;Comentarios recientes&quot;.</p>
+            {% else %}
+                <p style="color: var(--text-light); padding: 20px; background-color: var(--bg-gray-100); border-radius: 5px;">Puedes leer los comentarios a la derecha. Para publicar, <a href="{{ url_for('login') }}" style="color: var(--primary-color); text-decoration: underline;">inicia sesión como padre</a>.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Parte derecha: Lista de comentarios publicados -->
+        <div class="lista-comentarios">
+            <h2>Comentarios Recientes</h2>
+            <div id="comentarios-container">
+                <!-- Los comentarios se cargarán dinámicamente desde la base de datos -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal para ver comentario completo -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Comentario</h3>
+                <button class="modal-close" onclick="cerrarModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- El contenido del comentario se insertará aquí -->
+            </div>
+            <div class="modal-footer" id="modal-footer">
+                <!-- La fecha se insertará aquí -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="contacto">
+                <h3>Contáctanos</h3>
+                <form id="contactoForm" action="{{ url_for('insertar_contacto') }}" method="post">
+                    <input type="text" name="nombre" placeholder="Nombre" required maxlength="50" pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo letras y espacios permitidos">
+                    <input type="text" name="apellido" placeholder="Apellido" required maxlength="50" pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo letras y espacios permitidos">
+                    <input type="email" name="email" placeholder="Email" required maxlength="100" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Ingrese un email válido (ejemplo: usuario@dominio.com)">
+                    <textarea name="mensaje" placeholder="Mensaje" required maxlength="500" minlength="10" title="El mensaje debe tener entre 10 y 500 caracteres"></textarea>
+                    <button type="submit" id="btnEnviar">Enviar</button>
+                    <div id="mensajeExito" style="display:none; color: var(--primary-color); margin-top: 10px; font-weight: bold; padding: 10px; background-color: #d4edda; border-radius: 5px;"></div>
+                    <div id="mensajeError" style="display:none; color: #721c24; margin-top: 10px; font-weight: bold; padding: 10px; background-color: #f8d7da; border-radius: 5px;"></div>
+                    <div id="mensajeCargando" style="display:none; color: #856404; margin-top: 10px; font-weight: bold; padding: 10px; background-color: #fff3cd; border-radius: 5px;">Enviando mensaje...</div>
+                </form>
+            </div>
+    
+            <div class="info">
+                <h3>Teléfono</h3>
+                <p>55 3908 5006 - Soporte Técnico</p>
+                <p>442 776 3385 - Soporte Técnico</p>
+                <p>442 545 1626 - Contacto Nutrióloga</p>
+    
+                <h3>Dirección</h3>
+                <p>Carretera Estatal 420 S/N, El Rosario</p>
+                <p>Santiago de Querétaro, Qro</p>
+            </div>
+    
+            <div class="redes">
+                <h3>Síguenos</h3>
+                <a href="#"><img src="{{ url_for('static', filename='Imagenes/2023_Facebook_icon.svg.png') }}" alt="Facebook"></a>
+                <a href="#"><img src="{{ url_for('static', filename='Imagenes/instagramlogo.png') }}" alt="Instagram"></a>
+                <a href="#"><img src="{{ url_for('static', filename='Imagenes/Logo_of_Twitter.svg.png') }}" alt="Twitter"></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+function validarEmail(email) {
+    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return regex.test(email);
+}
+function validarSoloLetras(texto) {
+    const regex = /^[A-Za-z\u00C1\u00E1\u00C9\u00E9\u00CD\u00ED\u00D3\u00F3\u00DA\u00FA\u00D1\u00F1\s]+$/;
+    return regex.test(texto);
+}
+function mostrarError(campo, mensaje) {
+    const input = document.querySelector('[name="' + campo + '"]');
+    if (!input) return;
+    input.style.borderColor = '#b91c1c';
+    input.style.backgroundColor = '#fef2f2';
+    let errorDiv = document.getElementById('error-' + campo);
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'error-' + campo;
+        errorDiv.style.color = '#b91c1c';
+        errorDiv.style.fontSize = '13px';
+        errorDiv.style.marginTop = '5px';
+        input.parentNode.insertBefore(errorDiv, input.nextSibling);
+    }
+    errorDiv.textContent = mensaje;
+    errorDiv.style.display = 'block';
+}
+function limpiarError(campo) {
+    const input = document.querySelector('[name="' + campo + '"]');
+    if (!input) return;
+    input.style.borderColor = '';
+    input.style.backgroundColor = '';
+    const errorDiv = document.getElementById('error-' + campo);
+    if (errorDiv) errorDiv.style.display = 'none';
+}
+function validarFormularioContacto() {
+    const nombre = document.querySelector('input[name="nombre"]').value.trim();
+    const apellido = document.querySelector('input[name="apellido"]').value.trim();
+    const email = document.querySelector('input[name="email"]').value.trim();
+    const mensaje = document.querySelector('textarea[name="mensaje"]').value.trim();
+    let esValido = true;
+    if (nombre.length === 0) { mostrarError('nombre', 'El nombre es requerido'); esValido = false; }
+    else if (!validarSoloLetras(nombre)) { mostrarError('nombre', 'Solo se permiten letras y espacios'); esValido = false; }
+    else if (nombre.length < 2) { mostrarError('nombre', 'El nombre debe tener al menos 2 caracteres'); esValido = false; }
+    if (apellido.length === 0) { mostrarError('apellido', 'El apellido es requerido'); esValido = false; }
+    else if (!validarSoloLetras(apellido)) { mostrarError('apellido', 'Solo se permiten letras y espacios'); esValido = false; }
+    else if (apellido.length < 2) { mostrarError('apellido', 'El apellido debe tener al menos 2 caracteres'); esValido = false; }
+    if (email.length === 0) { mostrarError('email', 'El email es requerido'); esValido = false; }
+    else if (!validarEmail(email)) { mostrarError('email', 'Ingrese un email válido'); esValido = false; }
+    if (mensaje.length === 0) { mostrarError('mensaje', 'El mensaje es requerido'); esValido = false; }
+    else if (mensaje.length < 10) { mostrarError('mensaje', 'El mensaje debe tener al menos 10 caracteres'); esValido = false; }
+    else if (mensaje.length > 500) { mostrarError('mensaje', 'El mensaje no puede exceder 500 caracteres'); esValido = false; }
+    return esValido;
+}
+function escapeHtml(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+function cargarComentarios() {
+    const container = document.getElementById('comentarios-container');
+    if (!container) return;
+    fetch("/ObtenerComentarios", { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+        .then(function (res) {
+            if (!res.ok || !res.data.success) {
+                container.innerHTML = '<p style="text-align:center;color:#b91c1c;">No se pudieron cargar los comentarios. Inténtalo de nuevo.</p>';
+                return;
+            }
+            const data = res.data;
+            if (data.comentarios && data.comentarios.length > 0) {
+                container.innerHTML = '';
+                data.comentarios.forEach(function (comentario, index) {
+                    const fecha = new Date(comentario.fecha_comentario);
+                    const fechaFormateada = fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+                    const row = document.createElement('div');
+                    row.className = 'comentario';
+                    row.innerHTML =
+                        '<div class="comentario-info"><h4>' +
+                        escapeHtml(comentario.nombre) + ' ' + escapeHtml(comentario.apellido) +
+                        ' <span>• ' + fechaFormateada + '</span></h4>' +
+                        '<p id="comentario-texto-' + index + '" title="Ver comentario completo"></p>' +
+                        '<button type="button" class="btn-leer-mas hidden" id="btn-leer-mas-' + index + '">Leer más</button></div>';
+                    container.appendChild(row);
+                    document.getElementById('comentario-texto-' + index).textContent = comentario.comentario;
+                });
+                document.querySelectorAll('[id^="comentario-texto-"]').forEach(function (el, index) {
+                    el.addEventListener('click', function () { abrirModalComentario(index); });
+                    var b = document.getElementById('btn-leer-mas-' + index);
+                    if (b) b.addEventListener('click', function (e) { e.stopPropagation(); toggleComentario(index); });
+                });
+                setTimeout(verificarComentariosLargos, 100);
+                window.comentariosData = data.comentarios;
+            } else {
+                container.innerHTML = '<p style="text-align:center;color:#64748b;font-style:italic;">No hay comentarios aún. ¡Sé el primero en comentar!</p>';
+            }
+        })
+        .catch(function () {
+            container.innerHTML = '<p style="text-align:center;color:#b91c1c;">No se pudieron cargar los comentarios. Inténtalo de nuevo.</p>';
+        });
+}
+function verificarComentariosLargos() {
+    document.querySelectorAll('.comentario-info p').forEach(function (comentario, index) {
+        var btnLeerMas = document.getElementById('btn-leer-mas-' + index);
+        if (!btnLeerMas) return;
+        if (comentario.scrollHeight > comentario.clientHeight) btnLeerMas.classList.remove('hidden');
+        else btnLeerMas.classList.add('hidden');
+    });
+}
+function toggleComentario(index) {
+    var comentario = document.getElementById('comentario-texto-' + index);
+    var btnLeerMas = document.getElementById('btn-leer-mas-' + index);
+    if (!comentario || !btnLeerMas) return;
+    if (comentario.classList.contains('expanded')) {
+        comentario.classList.remove('expanded');
+        btnLeerMas.textContent = 'Leer más';
+    } else {
+        comentario.classList.add('expanded');
+        btnLeerMas.textContent = 'Leer menos';
+    }
+}
+function abrirModalComentario(index) {
+    if (!window.comentariosData || !window.comentariosData[index]) return;
+    var comentario = window.comentariosData[index];
+    var fecha = new Date(comentario.fecha_comentario);
+    var fechaFormateada = fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    document.getElementById('modal-title').textContent = 'Comentario de ' + comentario.nombre + ' ' + comentario.apellido;
+    document.getElementById('modal-body').textContent = comentario.comentario;
+    document.getElementById('modal-footer').textContent = 'Publicado el: ' + fechaFormateada;
+    document.getElementById('modal-overlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+function cerrarModal() {
+    var o = document.getElementById('modal-overlay');
+    if (o) o.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+document.addEventListener('DOMContentLoaded', function () {
+    var modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', function (e) { if (e.target === modalOverlay) cerrarModal(); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modalOverlay.style.display === 'flex') cerrarModal();
+        });
+    }
+    var form = document.getElementById('contactoForm');
+    if (form) {
+        ['nombre','apellido','email','mensaje'].forEach(function (name) {
+            var sel = name === 'mensaje' ? 'textarea[name="mensaje"]' : 'input[name="' + name + '"]';
+            var el = document.querySelector(sel);
+            if (!el) return;
+            el.addEventListener('input', function () {
+                var v = this.value.trim();
+                if (name === 'nombre') {
+                    if (!v) mostrarError('nombre', 'El nombre es requerido');
+                    else if (!validarSoloLetras(v)) mostrarError('nombre', 'Solo letras y espacios');
+                    else if (v.length < 2) mostrarError('nombre', 'Mínimo 2 caracteres');
+                    else limpiarError('nombre');
+                } else if (name === 'apellido') {
+                    if (!v) mostrarError('apellido', 'El apellido es requerido');
+                    else if (!validarSoloLetras(v)) mostrarError('apellido', 'Solo letras y espacios');
+                    else if (v.length < 2) mostrarError('apellido', 'Mínimo 2 caracteres');
+                    else limpiarError('apellido');
+                } else if (name === 'email') {
+                    if (!v) mostrarError('email', 'El email es requerido');
+                    else if (!validarEmail(v)) mostrarError('email', 'Email no válido');
+                    else limpiarError('email');
+                } else {
+                    if (!v) mostrarError('mensaje', 'El mensaje es requerido');
+                    else if (v.length < 10) mostrarError('mensaje', 'Mínimo 10 caracteres');
+                    else if (v.length > 500) mostrarError('mensaje', 'Máximo 500 caracteres');
+                    else limpiarError('mensaje');
+                }
+            });
+        });
+        var mensajeExito = document.getElementById('mensajeExito');
+        var mensajeError = document.getElementById('mensajeError');
+        var mensajeCargando = document.getElementById('mensajeCargando');
+        var btnEnviar = document.getElementById('btnEnviar');
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            if (!validarFormularioContacto()) return;
+            mensajeExito.style.display = 'none';
+            mensajeError.style.display = 'none';
+            mensajeCargando.style.display = 'block';
+            btnEnviar.disabled = true;
+            var csrfEl = document.querySelector('meta[name="csrf-token"]');
+            var csrfToken = csrfEl ? csrfEl.content : '';
+            fetch("/InsertarContacto", {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                body: new FormData(form),
+                credentials: 'same-origin'
+            }).then(function (response) {
+                if (!response.ok) {
+                    var ct = response.headers.get('content-type');
+                    if (ct && ct.indexOf('application/json') !== -1) return response.json().then(function (err) { throw err; });
+                    throw { success: false };
+                }
+                return response.json();
+            }).then(function (data) {
+                mensajeCargando.style.display = 'none';
+                btnEnviar.disabled = false;
+                if (data.success) {
+                    mensajeError.style.display = 'none';
+                    mensajeExito.textContent = data.message;
+                    mensajeExito.style.display = 'block';
+                    form.reset();
+                    ['nombre','apellido','email','mensaje'].forEach(limpiarError);
+                    setTimeout(function () { mensajeExito.style.display = 'none'; }, 5000);
+                } else {
+                    mensajeExito.style.display = 'none';
+                    var errorMsg = data.message || 'Error';
+                    if (data.errors && data.errors.length) errorMsg += ': ' + data.errors.join(', ');
+                    mensajeError.textContent = errorMsg;
+                    mensajeError.style.display = 'block';
+                    setTimeout(function () { mensajeError.style.display = 'none'; }, 8000);
+                }
+            }).catch(function () {
+                mensajeCargando.style.display = 'none';
+                btnEnviar.disabled = false;
+                mensajeExito.style.display = 'none';
+                mensajeError.textContent = 'No se pudo completar la acción. Inténtalo de nuevo.';
+                mensajeError.style.display = 'block';
+                setTimeout(function () { mensajeError.style.display = 'none'; }, 8000);
+            });
+        });
+    }
+    var formComentario = document.getElementById('form-comentario');
+    var btnComentar = document.getElementById('btnComentar');
+    var mensajeExitoComentario = document.getElementById('mensajeExitoComentario');
+    var mensajeErrorComentario = document.getElementById('mensajeErrorComentario');
+    var mensajeCargandoComentario = document.getElementById('mensajeCargandoComentario');
+    if (formComentario && btnComentar && mensajeExitoComentario && mensajeErrorComentario && mensajeCargandoComentario) {
+        formComentario.addEventListener('submit', function (event) {
+            event.preventDefault();
+            var comentario = document.querySelector('#comentario').value.trim();
+            if (comentario.length < 5) { mostrarError('comentario', 'Mínimo 5 caracteres'); return; }
+            if (comentario.length > 1000) { mostrarError('comentario', 'Máximo 1000 caracteres'); return; }
+            limpiarError('comentario');
+            mensajeExitoComentario.style.display = 'none';
+            mensajeErrorComentario.style.display = 'none';
+            mensajeCargandoComentario.style.display = 'block';
+            btnComentar.disabled = true;
+            var csrfEl = document.querySelector('meta[name="csrf-token"]');
+            var csrfToken = csrfEl ? csrfEl.content : '';
+            var headers = { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' };
+            if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
+            fetch("/InsertarComentario", {
+                method: 'POST',
+                headers: headers,
+                body: new FormData(formComentario),
+                credentials: 'same-origin'
+            }).then(function (response) {
+                if (!response.ok) {
+                    var ct = response.headers.get('content-type');
+                    if (ct && ct.indexOf('application/json') !== -1) return response.json().then(function (err) { throw err; });
+                    throw { success: false };
+                }
+                return response.json();
+            }).then(function (data) {
+                mensajeCargandoComentario.style.display = 'none';
+                btnComentar.disabled = false;
+                if (data.success) {
+                    mensajeErrorComentario.style.display = 'none';
+                    mensajeExitoComentario.textContent = data.message;
+                    mensajeExitoComentario.style.display = 'block';
+                    formComentario.reset();
+                    cargarComentarios();
+                    setTimeout(function () { mensajeExitoComentario.style.display = 'none'; }, 5000);
+                } else {
+                    mensajeExitoComentario.style.display = 'none';
+                    var errorMsg = data.message || 'Error';
+                    if (data.errors && data.errors.length) errorMsg += ': ' + data.errors.join(', ');
+                    mensajeErrorComentario.textContent = errorMsg;
+                    mensajeErrorComentario.style.display = 'block';
+                    setTimeout(function () { mensajeErrorComentario.style.display = 'none'; }, 8000);
+                }
+            }).catch(function (err) {
+                mensajeCargandoComentario.style.display = 'none';
+                btnComentar.disabled = false;
+                mensajeExitoComentario.style.display = 'none';
+                var msg = (window.NutriKidsMessages ? NutriKidsMessages.fromCatch(err) : 'No se pudo completar la acción. Inténtalo de nuevo.');
+                mensajeErrorComentario.textContent = msg;
+                mensajeErrorComentario.style.display = 'block';
+                setTimeout(function () { mensajeErrorComentario.style.display = 'none'; }, 8000);
+            });
+        });
+    }
+    cargarComentarios();
+});
+    </script>
+</body>
+</html>

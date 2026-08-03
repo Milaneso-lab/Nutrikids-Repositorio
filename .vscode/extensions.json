@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "dbcode.dbcode",
+    "ms-azuretools.vscode-docker",
+    "bmewburn.vscode-intelephense-client",
+    "ms-python.python"
+  ]
+}

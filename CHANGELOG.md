@@ -1,126 +1,116 @@
-# Release Notes
+# Changelog — NutriKids
 
-## [Unreleased](https://github.com/laravel/laravel/compare/v12.10.0...12.x)
+Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
-## [v12.10.0](https://github.com/laravel/laravel/compare/v12.9.1...v12.10.0) - 2025-11-04
+## [No publicado]
 
-* Add background driver by [@barryvdh](https://github.com/barryvdh) in https://github.com/laravel/laravel/pull/6699
+### Corregido
 
-## [v12.9.1](https://github.com/laravel/laravel/compare/v12.9.0...v12.9.1) - 2025-10-23
+- **Alta de usuarios rompía con un 500 sin mensaje**: `usuarios.rol_id` es `NOT NULL` y ningún
+  controlador lo rellenaba. Ahora `rol` y `rol_id` se derivan el uno del otro al guardar, tanto en
+  Eloquent (`User::alinearRolYRolId`) como en SQLAlchemy (listeners sobre `Usuario`)
+- Los formularios del panel devolvían JSON crudo al navegador: el nuevo trait `RespuestasCrud`
+  responde JSON a las peticiones AJAX y redirección con mensaje flash a los formularios
+- La configuración del sistema y el catálogo de instituciones ya no se descartan ni se guardan en
+  un JSON en disco: tienen tablas `configuraciones` e `instituciones` en PostgreSQL
+- Responder un mensaje de contacto guarda la respuesta en lugar de fingir el envío
+- Las mediciones registradas en el panel rellenan `peso_kg`, `talla_cm` e `imc`, que son las
+  columnas que leen la API y la app móvil
+- La app móvil entiende el sobre de error de la API y muestra el mensaje real («Email ya
+  registrado») en vez de «Ocurrió un error inesperado»
 
-* [12.x] Replace Bootcamp with Laravel Learn by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6692
-* [12.x] Comment out CLI workers for fresh applications by [@timacdonald](https://github.com/timacdonald) in https://github.com/laravel/laravel/pull/6693
+### Añadido
 
-## [v12.9.0](https://github.com/laravel/laravel/compare/v12.8.0...v12.9.0) - 2025-10-21
+- Enlace `pacientes.nino_id`: el nutriólogo puede vincular un expediente con un niño registrado
+  desde la app, y las mediciones y planes pasan a ser visibles en ambos clientes
+- `DELETE /api/v1/usuarios/{id}` con guarda contra autoeliminación
+- Manejadores globales de excepciones de base de datos en FastAPI con contrato JSON uniforme
+- Retroalimentación en el panel: spinner y botón deshabilitado al enviar, y confirmación previa a
+  las acciones destructivas
+- `scripts/qa/verificar_persistencia.py`: 57 comprobaciones de CRUD real contra API, panel web y
+  PostgreSQL, incluida la visibilidad cruzada web ↔ móvil
+- `docs/estabilizacion-persistencia.md` con el informe completo de la fase
 
-**Full Changelog**: https://github.com/laravel/laravel/compare/v12.8.0...v12.9.0
+### Seguridad
 
-## [v12.8.0](https://github.com/laravel/laravel/compare/v12.7.1...v12.8.0) - 2025-10-20
+- `NUTRIKIDS_SECRET_KEY` y `FLASK_SECRET_KEY` son obligatorias (mínimo 32 caracteres):
+  se eliminan los valores por defecto `change-this-key-in-production` y `change-me`,
+  que permitían firmar JWT y cookies de sesión con una clave pública
+- `NUTRIKIDS_DATABASE_URL` obligatoria; PostgreSQL como única fuente de datos
+- `AdminTemporalSeeder` y `admin:crear-temporal` toman las credenciales de
+  `ADMIN_TEMPORAL_EMAIL`/`ADMIN_TEMPORAL_PASSWORD` y se bloquean en producción
+- El recuadro de credenciales de demo del login de Flask requiere
+  `FLASK_SHOW_DEMO_CREDENTIALS=true` (por defecto oculto)
 
-* [12.x] Makes test suite using broadcast's `null` driver by [@nunomaduro](https://github.com/nunomaduro) in https://github.com/laravel/laravel/pull/6691
+### Infraestructura
 
-## [v12.7.1](https://github.com/laravel/laravel/compare/v12.7.0...v12.7.1) - 2025-10-15
+- Servicio `pgadmin` en `docker-compose.yml` (puerto 5050) con servidor precargado
+- Migración Alembic `0009`: índices sobre claves foráneas, índices de consulta y CHECK clínicos
+- Scripts de respaldo y restauración en `scripts/db/` (bash y PowerShell)
+- Conexión DBCode versionada en `.vscode/settings.json`
 
-* Added `failover` driver to the `queue` config comment.  by [@sajjadhossainshohag](https://github.com/sajjadhossainshohag) in https://github.com/laravel/laravel/pull/6688
+### Documentación
 
-## [v12.7.0](https://github.com/laravel/laravel/compare/v12.6.0...v12.7.0) - 2025-10-14
+- `docs/infraestructura-datos-postgresql.md` y `docs/diccionario-datos.md`
 
-**Full Changelog**: https://github.com/laravel/laravel/compare/v12.6.0...v12.7.0
+## [1.0.0-rc.1] — 2026-07-29
 
-## [v12.6.0](https://github.com/laravel/laravel/compare/v12.5.0...v12.6.0) - 2025-10-02
+### Release Candidate
 
-* Fix setup script by [@goldmont](https://github.com/goldmont) in https://github.com/laravel/laravel/pull/6682
+Consolidación para entrega profesional. Sin nuevas funcionalidades de producto.
 
-## [v12.5.0](https://github.com/laravel/laravel/compare/v12.4.0...v12.5.0) - 2025-09-30
+### Seguridad
 
-* [12.x] Fix type casting for environment variables in config files by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6670
-* Fix CVEs affecting vite by [@faissaloux](https://github.com/faissaloux) in https://github.com/laravel/laravel/pull/6672
-* Update .editorconfig to target compose.yaml by [@fredikaputra](https://github.com/fredikaputra) in https://github.com/laravel/laravel/pull/6679
-* Add pre-package-uninstall script to composer.json by [@cosmastech](https://github.com/cosmastech) in https://github.com/laravel/laravel/pull/6681
+- Seeds de desarrollo (`admin123`, etc.) protegidos por `NUTRIKIDS_ENVIRONMENT` y `NUTRIKIDS_ENABLE_DEV_SEED`
+- Modo demo móvil desactivado por defecto (`EXPO_PUBLIC_DEMO_MODE=false`)
+- Health check FastAPI valida conectividad a PostgreSQL
 
-## [v12.4.0](https://github.com/laravel/laravel/compare/v12.3.1...v12.4.0) - 2025-08-29
+### Infraestructura
 
-* [12.x] Add default Redis retry configuration by [@mateusjatenee](https://github.com/mateusjatenee) in https://github.com/laravel/laravel/pull/6666
+- `Dockerfile.fastapi` sin `--reload` (producción)
+- Health check Flask en `docker-compose.yml`
+- FastAPI ya no depende del arranque de Laravel en compose
 
-## [v12.3.1](https://github.com/laravel/laravel/compare/v12.3.0...v12.3.1) - 2025-08-21
+### Calidad
 
-* [12.x] Bump Pint version by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6653
-* [12.x] Making sure all related processed are closed when terminating the currently command by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6654
-* [12.x] Use application name from configuration by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6655
-* Bring back postAutoloadDump script by [@jasonvarga](https://github.com/jasonvarga) in https://github.com/laravel/laravel/pull/6662
+- CI ampliado: Laravel PHPUnit + FastAPI unit + móvil typecheck/tests
+- Estructura de tests unitarios móvil (Jest) con smoke test de validadores
+- Script `scripts/verify-rc.ps1` para verificación local
 
-## [v12.3.0](https://github.com/laravel/laravel/compare/v12.2.0...v12.3.0) - 2025-08-03
+### Documentación
 
-* Fix Critical Security Vulnerability in form-data Dependency by [@izzygld](https://github.com/izzygld) in https://github.com/laravel/laravel/pull/6645
-* Revert "fix" by [@RobertBoes](https://github.com/RobertBoes) in https://github.com/laravel/laravel/pull/6646
-* Change composer post-autoload-dump script to Artisan command by [@lmjhs](https://github.com/lmjhs) in https://github.com/laravel/laravel/pull/6647
+- README raíz reescrito para NutriKids
+- Guías en `docs/`: instalación, despliegue, desarrolladores, manual técnico, manual usuario, arquitectura
+- `17_ReleaseCandidate.md` con informe técnico completo
+- Actualizados `EstadoProyecto.md`, `Bitacora.md`, `13_Backlog.md`
 
-## [v12.2.0](https://github.com/laravel/laravel/compare/v12.1.0...v12.2.0) - 2025-07-11
+### Conocido / pendiente post-RC
 
-* Add Vite 7 support by [@timacdonald](https://github.com/timacdonald) in https://github.com/laravel/laravel/pull/6639
+- T4.3 login PIN niño no implementado (entrada temporal "Modo niño")
+- Laravel/Flask aún consumen BD directamente en parte del dominio
+- Gateway TLS (T1.4) pendiente
+- Tests de integración FastAPI requieren PostgreSQL en CI
 
-## [v12.1.0](https://github.com/laravel/laravel/compare/v12.0.11...v12.1.0) - 2025-07-03
+---
 
-* [12.x] Disable nightwatch in testing by [@laserhybiz](https://github.com/laserhybiz) in https://github.com/laravel/laravel/pull/6632
-* [12.x] Reorder environment variables in phpunit.xml for logical grouping by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6634
-* Change to hyphenate prefixes and cookie names by [@u01jmg3](https://github.com/u01jmg3) in https://github.com/laravel/laravel/pull/6636
-* [12.x] Fix type casting for environment variables in config files by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6637
+## Histórico de épicas móvil (pre-RC)
 
-## [v12.0.11](https://github.com/laravel/laravel/compare/v12.0.10...v12.0.11) - 2025-06-10
+### Épica 7 — Comunicación (T4.6)
 
-**Full Changelog**: https://github.com/laravel/laravel/compare/v12.0.10...v12.0.11
+Centro de notificaciones, mensajes padre→niño, recordatorios, infra push.
 
-## [v12.0.10](https://github.com/laravel/laravel/compare/v12.0.9...v12.0.10) - 2025-06-09
+### Épica 6 — Hábitos saludables (T4.5)
 
-* fix alphabetical order by [@Khuthaily](https://github.com/Khuthaily) in https://github.com/laravel/laravel/pull/6627
-* [12.x] Reduce redundancy and keeps the .gitignore file cleaner by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6629
-* [12.x] Fix: Add void return type to satisfy Rector analysis by [@Aluisio-Pires](https://github.com/Aluisio-Pires) in https://github.com/laravel/laravel/pull/6628
+Tracker diario, calendario, estadísticas, integración con motor de progresión.
 
-## [v12.0.9](https://github.com/laravel/laravel/compare/v12.0.8...v12.0.9) - 2025-05-26
+### Épica 5 — Motor de progresión (T4.4b)
 
-* [12.x] Remove apc by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6611
-* [12.x] Add JSON Schema to package.json by [@martinbean](https://github.com/martinbean) in https://github.com/laravel/laravel/pull/6613
-* Minor language update by [@woganmay](https://github.com/woganmay) in https://github.com/laravel/laravel/pull/6615
-* Enhance .gitignore to exclude common OS and log files by [@mohammadRezaei1380](https://github.com/mohammadRezaei1380) in https://github.com/laravel/laravel/pull/6619
+XP, niveles, monedas, energía, rachas, logros, misiones, mascota.
 
-## [v12.0.8](https://github.com/laravel/laravel/compare/v12.0.7...v12.0.8) - 2025-05-12
+### Épica 4 — Centro familiar (T4.4a)
 
-* [12.x] Clean up URL formatting in README by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6601
+CRUD niños, dashboard padre, modo niño temporal.
 
-## [v12.0.7](https://github.com/laravel/laravel/compare/v12.0.6...v12.0.7) - 2025-04-15
+### Épica 3 — Auth móvil (T4.1)
 
-* Add `composer run test` command by [@crynobone](https://github.com/crynobone) in https://github.com/laravel/laravel/pull/6598
-* Partner Directory Changes in ReadME by [@joshcirre](https://github.com/joshcirre) in https://github.com/laravel/laravel/pull/6599
-
-## [v12.0.6](https://github.com/laravel/laravel/compare/v12.0.5...v12.0.6) - 2025-04-08
-
-**Full Changelog**: https://github.com/laravel/laravel/compare/v12.0.5...v12.0.6
-
-## [v12.0.5](https://github.com/laravel/laravel/compare/v12.0.4...v12.0.5) - 2025-04-02
-
-* [12.x] Update `config/mail.php` to match the latest core configuration by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6594
-
-## [v12.0.4](https://github.com/laravel/laravel/compare/v12.0.3...v12.0.4) - 2025-03-31
-
-* Bump vite from 6.0.11 to 6.2.3 - Vulnerability patch by [@abdel-aouby](https://github.com/abdel-aouby) in https://github.com/laravel/laravel/pull/6586
-* Bump vite from 6.2.3 to 6.2.4 by [@thinkverse](https://github.com/thinkverse) in https://github.com/laravel/laravel/pull/6590
-
-## [v12.0.3](https://github.com/laravel/laravel/compare/v12.0.2...v12.0.3) - 2025-03-17
-
-* Remove reverted change from CHANGELOG.md by [@AJenbo](https://github.com/AJenbo) in https://github.com/laravel/laravel/pull/6565
-* Improves clarity in app.css file by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6569
-* [12.x] Refactor: Structural improvement for clarity by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6574
-* Bump axios from 1.7.9 to 1.8.2 - Vulnerability patch by [@abdel-aouby](https://github.com/abdel-aouby) in https://github.com/laravel/laravel/pull/6572
-* [12.x] Remove Unnecessarily [@source](https://github.com/source) by [@AhmedAlaa4611](https://github.com/AhmedAlaa4611) in https://github.com/laravel/laravel/pull/6584
-
-## [v12.0.2](https://github.com/laravel/laravel/compare/v12.0.1...v12.0.2) - 2025-03-04
-
-* Make the github test action run out of the box independent of the choice of testing framework by [@ndeblauw](https://github.com/ndeblauw) in https://github.com/laravel/laravel/pull/6555
-
-## [v12.0.1](https://github.com/laravel/laravel/compare/v12.0.0...v12.0.1) - 2025-02-24
-
-* [12.x] prefer stable stability by [@pataar](https://github.com/pataar) in https://github.com/laravel/laravel/pull/6548
-
-## [v12.0.0 (2025-??-??)](https://github.com/laravel/laravel/compare/v11.0.2...v12.0.0)
-
-Laravel 12 includes a variety of changes to the application skeleton. Please consult the diff to see what's new.
+Login, registro, refresh, SecureStore.

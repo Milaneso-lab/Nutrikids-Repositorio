@@ -1,0 +1,26 @@
+{% extends 'portal/layout.html' %}
+{% block title %}Hábitos saludables{% endblock %}
+{% block content %}
+<div class="portal-header">
+    <h1>Hábitos saludables</h1>
+    <p style="margin:0;color:var(--text-medium);width:100%">Seguimiento informativo · La gamificación está solo en la app infantil.</p>
+</div>
+{% if habitos_por_nino %}
+    {% for bloque in habitos_por_nino %}
+    <div class="portal-card" style="margin-bottom:1rem">
+        <h3>{{ bloque.nombre }}</h3>
+        {% if bloque.habitos %}
+        <ul style="margin:0.5rem 0 0;padding-left:1.2rem">
+            {% for h in bloque.habitos %}
+            <li>{{ h.get('nombre_habito', h.get('habito_nombre', 'Hábito')) }} — {{ 'Activo' if h.get('activo', True) else 'Pausado' }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="portal-empty" style="padding:1rem">Sin hábitos configurados.</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+<div class="portal-card portal-empty">No hay hábitos registrados. Configúralos con tu nutriólogo o desde la app móvil.</div>
+{% endif %}
+{% endblock %}

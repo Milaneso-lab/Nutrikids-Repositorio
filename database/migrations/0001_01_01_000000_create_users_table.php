@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Tabla Usuarios (admin, nutriologo, padre)
-        Schema::create('Usuarios', function (Blueprint $table) {
+        // Tabla usuarios (admin, nutriólogo, padre) — nombre en minúsculas para PostgreSQL y FastAPI
+        Schema::create('usuarios', function (Blueprint $table) {
             $table->id('id_usuario');
             $table->string('nombre', 100);
             $table->string('apellido_paterno', 100);
@@ -36,7 +36,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('Usuarios');
+        Schema::dropIfExists('usuarios');
         Schema::dropIfExists('password_reset_tokens');
     }
 };

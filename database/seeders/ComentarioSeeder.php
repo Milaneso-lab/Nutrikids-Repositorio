@@ -5,6 +5,10 @@ namespace Database\Seeders;
 use App\Models\Comentario;
 use Illuminate\Database\Seeder;
 
+/**
+ * Comentarios de ejemplo. Sólo desarrollo local: se invoca desde
+ * DemoContenidoSeeder, nunca desde DatabaseSeeder.
+ */
 class ComentarioSeeder extends Seeder
 {
     public function run(): void

@@ -1,0 +1,44 @@
+{% extends 'portal/layout.html' %}
+{% block title %}{{ nino.get('nombre', 'Perfil') }}{% endblock %}
+{% block content %}
+<div class="portal-header">
+    <div>
+        <h1>{{ nino.get('nombre') }} {{ nino.get('apellidos', '') }}</h1>
+        <p style="margin:0;color:var(--text-medium)">Seguimiento de peso, talla e IMC · Sin gamificación</p>
+    </div>
+    <a href="{{ url_for('portal_hijos') }}">← Volver</a>
+</div>
+
+<div class="portal-grid" style="margin-bottom:1.5rem">
+    <div class="portal-card"><h3>Peso actual</h3><p class="portal-stat">{{ ultima_eval.get('peso_kg', '—') }}{% if ultima_eval.get('peso_kg') %} kg{% endif %}</p></div>
+    <div class="portal-card"><h3>Talla</h3><p class="portal-stat">{{ ultima_eval.get('talla_cm', '—') }}{% if ultima_eval.get('talla_cm') %} cm{% endif %}</p></div>
+    <div class="portal-card"><h3>IMC</h3><p class="portal-stat">{{ ultima_eval.get('imc', '—') }}</p></div>
+</div>
+
+{% if evaluaciones %}
+<h2 style="font-size:1.1rem">Historial de evaluaciones</h2>
+<table class="portal-table" style="margin-bottom:1.5rem">
+    <thead><tr><th>Fecha</th><th>Peso</th><th>Talla</th><th>Recomendaciones</th></tr></thead>
+    <tbody>
+    {% for e in evaluaciones %}
+        <tr>
+            <td>{{ e.get('fecha_evaluacion', e.get('created_at', '—'))[:10] }}</td>
+            <td>{{ e.get('peso_kg', '—') }}</td>
+            <td>{{ e.get('talla_cm', '—') }}</td>
+            <td>{{ e.get('recomendaciones', 'Sin recomendaciones') }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if menus %}
+<h2 style="font-size:1.1rem">Planes alimenticios</h2>
+{% for m in menus %}
+<div class="portal-card" style="margin-bottom:0.75rem">
+    <h3>{{ m.get('nombre', 'Menú') }}</h3>
+    <p style="white-space:pre-line">{{ m.get('descripcion', '') }}</p>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

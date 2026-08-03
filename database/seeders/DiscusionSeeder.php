@@ -5,6 +5,10 @@ namespace Database\Seeders;
 use App\Models\Discusion;
 use Illuminate\Database\Seeder;
 
+/**
+ * Discusiones de ejemplo. Sólo desarrollo local: se invoca desde
+ * DemoContenidoSeeder, nunca desde DatabaseSeeder.
+ */
 class DiscusionSeeder extends Seeder
 {
     public function run(): void

@@ -1,0 +1,22 @@
+{
+  "dbcode.connections": [
+    {
+      "connectionId": "nutrikids-postgres-local",
+      "name": "NutriKids PostgreSQL (local)",
+      "driver": "postgres",
+      "connectionType": "host",
+      "host": "127.0.0.1",
+      "port": 5432,
+      "ssl": false,
+      "username": "nutrikids_user",
+      "savePassword": "secretStorage",
+      "database": "nutrikids",
+      "connectionTimeout": 30
+    }
+  ],
+  "dbcode.defaultConnection": "nutrikids-postgres-local",
+  "files.associations": {
+    "*.sql": "sql"
+  },
+  "sqltools.disableReleaseNotifications": true
+}

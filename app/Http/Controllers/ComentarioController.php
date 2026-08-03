@@ -12,15 +12,8 @@ class ComentarioController extends Controller
     public function index()
     {
         try {
-            // Si el usuario está logueado, mostrar solo sus comentarios
-            if (Auth::check() && Auth::user()->rol === 'padre') {
-                $comentarios = Comentario::where('id_usuario', Auth::id())
-                    ->orderBy('fecha_comentario', 'desc')
-                    ->get(['nombre', 'apellido', 'comentario', 'fecha_comentario', 'id_usuario']);
-            } else {
-                // Si no está logueado, no mostrar comentarios
-                $comentarios = collect([]);
-            }
+            $comentarios = Comentario::orderBy('fecha_comentario', 'desc')
+                ->get(['nombre', 'apellido', 'comentario', 'fecha_comentario', 'id_usuario']);
 
             return response()->json([
                 'success' => true,

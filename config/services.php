@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'nutrikids_api' => [
+        'base_url' => env('NUTRIKIDS_API_BASE_URL', 'http://127.0.0.1:8000'),
+        'timeout' => env('NUTRIKIDS_API_TIMEOUT', 10),
+    ],
+
+    'flask' => [
+        'public_url' => env('FLASK_PUBLIC_URL', ''),
+    ],
+
 ];

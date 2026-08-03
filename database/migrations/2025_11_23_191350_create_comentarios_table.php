@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('apellido', 50);
             $table->text('comentario');
             $table->dateTime('fecha_comentario')->useCurrent();
-            $table->timestamps();
         });
     }
 

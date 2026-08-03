@@ -1,10 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Login - NutriKids</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('CSS/style.css') }}">
     <script src="{{ asset('js/session.js') }}"></script>
     <style>
@@ -181,7 +184,7 @@
                 <div class="form-group">
                     <label for="loginPassword">Contraseña</label>
                     <div class="password-container">
-                        <input type="password" id="loginPassword" name="contrasena" required minlength="8" maxlength="50" title="La contraseña debe tener al menos 8 caracteres" placeholder="nutriologo123">
+                        <input type="password" id="loginPassword" name="contrasena" required minlength="8" maxlength="50" title="La contraseña debe tener al menos 8 caracteres" placeholder="Mínimo 8 caracteres">
                         <span class="toggle-password" onclick="togglePassword('loginPassword')">👁️</span>
                     </div>
                     <small class="error-message" id="error-loginPassword" style="display: none; color: #d32f2f; font-size: 12px;"></small>
@@ -555,7 +558,7 @@
             }
             
             // Enviar datos por AJAX
-            fetch('{{ route("auth.login") }}', {
+            fetch('/IniciarSesion', {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
@@ -572,7 +575,7 @@
                     return response.json();
                 } else {
                     // Si no es JSON, puede ser un error de validación CSRF
-                    throw new Error('Error de autenticación. Por favor, recarga la página e intenta de nuevo.');
+                    throw new Error('No se pudo iniciar sesión. Inténtalo de nuevo.');
                 }
             })
             .then(data => {
@@ -625,7 +628,7 @@
                 mensajeExitoLogin.style.display = 'none';
                 
                 console.error('Error:', error);
-                mensajeErrorLogin.textContent = 'Error de conexión. Por favor, inténtalo de nuevo.';
+                mensajeErrorLogin.textContent = 'No se pudo completar la acción. Inténtalo de nuevo.';
                 mensajeErrorLogin.style.display = 'block';
                 
                 // Ocultar mensaje de error después de 8 segundos
@@ -678,7 +681,7 @@
                     if (contentType && contentType.includes("application/json")) {
                         return response.json().then(err => { throw err; });
                     } else {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        throw { success: false };
                     }
                 }
                 return response.json();
@@ -727,301 +730,7 @@
                 mensajeExitoRegistro.style.display = 'none';
                 
                 console.error('Error:', error);
-                let displayError = 'Error de conexión. Por favor, inténtalo de nuevo.';
-                
-                // Si el error es un objeto con success, usar su mensaje
-                if (error && typeof error === 'object') {
-                    if (error.success === false && error.message) {
-                        displayError = error.message;
-                    } else if (error.message) {
-                        if (!error.message.includes('CSRF token mismatch')) {
-                            displayError = error.message;
-                        } else {
-                            displayError = 'Error de seguridad (CSRF). Por favor, recarga la página e intenta de nuevo.';
-                        }
-                    }
-                } else if (typeof error === 'string') {
-                    displayError = error;
-                }
-                
-                // No mostrar errores técnicos al usuario
-                if (displayError.includes('SQLSTATE') || displayError.includes('Unknown column') || displayError.includes('Connection')) {
-                    displayError = 'Error al registrar el usuario. Por favor, inténtalo de nuevo.';
-                }
-                
-                mensajeErrorRegistro.textContent = displayError;
-                mensajeErrorRegistro.style.display = 'block';
-                
-                // Ocultar mensaje de error después de 8 segundos
-                setTimeout(() => {
-                    mensajeErrorRegistro.style.display = 'none';
-                }, 8000);
-            });
-        });
-    </script>
-    
-    <script>
-// Script para manejar el envío del formulario de contacto por AJAX
-const form = document.getElementById('contactoForm');
-const mensajeExito = document.getElementById('mensajeExito');
-const mensajeError = document.getElementById('mensajeError');
-const mensajeCargando = document.getElementById('mensajeCargando');
-const btnEnviar = document.getElementById('btnEnviar');
-
-// Función para validar email
-function validarEmail(email) {
-    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return regex.test(email);
-}
-
-// Función para validar solo letras y espacios
-function validarSoloLetras(texto) {
-    const regex = /^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/;
-    return regex.test(texto);
-}
-
-// Función para mostrar errores de validación
-function mostrarError(campo, mensaje) {
-    const input = document.querySelector(`[name="${campo}"]`);
-    input.style.borderColor = '#d32f2f';
-    input.style.backgroundColor = '#ffebee';
-    
-    // Crear o actualizar mensaje de error
-    let errorDiv = document.getElementById(`error-${campo}`);
-    if (!errorDiv) {
-        errorDiv = document.createElement('div');
-        errorDiv.id = `error-${campo}`;
-        errorDiv.style.color = '#d32f2f';
-        errorDiv.style.fontSize = '12px';
-        errorDiv.style.marginTop = '5px';
-        input.parentNode.insertBefore(errorDiv, input.nextSibling);
-    }
-    errorDiv.textContent = mensaje;
-    errorDiv.style.display = 'block';
-}
-
-// Función para limpiar errores
-function limpiarError(campo) {
-    const input = document.querySelector(`[name="${campo}"]`);
-    input.style.borderColor = '';
-    input.style.backgroundColor = '';
-    
-    const errorDiv = document.getElementById(`error-${campo}`);
-    if (errorDiv) {
-        errorDiv.style.display = 'none';
-    }
-}
-
-// Validaciones en tiempo real
-document.querySelector('input[name="nombre"]').addEventListener('input', function() {
-    const valor = this.value.trim();
-    if (valor.length === 0) {
-        mostrarError('nombre', 'El nombre es requerido');
-    } else if (!validarSoloLetras(valor)) {
-        mostrarError('nombre', 'Solo se permiten letras y espacios');
-    } else if (valor.length < 2) {
-        mostrarError('nombre', 'El nombre debe tener al menos 2 caracteres');
-    } else {
-        limpiarError('nombre');
-    }
-});
-
-document.querySelector('input[name="apellido"]').addEventListener('input', function() {
-    const valor = this.value.trim();
-    if (valor.length === 0) {
-        mostrarError('apellido', 'El apellido es requerido');
-    } else if (!validarSoloLetras(valor)) {
-        mostrarError('apellido', 'Solo se permiten letras y espacios');
-    } else if (valor.length < 2) {
-        mostrarError('apellido', 'El apellido debe tener al menos 2 caracteres');
-    } else {
-        limpiarError('apellido');
-    }
-});
-
-document.querySelector('input[name="email"]').addEventListener('input', function() {
-    const valor = this.value.trim();
-    if (valor.length === 0) {
-        mostrarError('email', 'El email es requerido');
-    } else if (!validarEmail(valor)) {
-        mostrarError('email', 'Ingrese un email válido (ejemplo: usuario@dominio.com)');
-    } else {
-        limpiarError('email');
-    }
-});
-
-document.querySelector('textarea[name="mensaje"]').addEventListener('input', function() {
-    const valor = this.value.trim();
-    if (valor.length === 0) {
-        mostrarError('mensaje', 'El mensaje es requerido');
-    } else if (valor.length < 10) {
-        mostrarError('mensaje', 'El mensaje debe tener al menos 10 caracteres');
-    } else if (valor.length > 500) {
-        mostrarError('mensaje', 'El mensaje no puede exceder 500 caracteres');
-    } else {
-        limpiarError('mensaje');
-    }
-});
-
-// Función para validar todo el formulario
-function validarFormulario() {
-    const nombre = document.querySelector('input[name="nombre"]').value.trim();
-    const apellido = document.querySelector('input[name="apellido"]').value.trim();
-    const email = document.querySelector('input[name="email"]').value.trim();
-    const mensaje = document.querySelector('textarea[name="mensaje"]').value.trim();
-    
-    let esValido = true;
-    
-    // Validar nombre
-    if (nombre.length === 0) {
-        mostrarError('nombre', 'El nombre es requerido');
-        esValido = false;
-    } else if (!validarSoloLetras(nombre)) {
-        mostrarError('nombre', 'Solo se permiten letras y espacios');
-        esValido = false;
-    } else if (nombre.length < 2) {
-        mostrarError('nombre', 'El nombre debe tener al menos 2 caracteres');
-        esValido = false;
-    }
-    
-    // Validar apellido
-    if (apellido.length === 0) {
-        mostrarError('apellido', 'El apellido es requerido');
-        esValido = false;
-    } else if (!validarSoloLetras(apellido)) {
-        mostrarError('apellido', 'Solo se permiten letras y espacios');
-        esValido = false;
-    } else if (apellido.length < 2) {
-        mostrarError('apellido', 'El apellido debe tener al menos 2 caracteres');
-        esValido = false;
-    }
-    
-    // Validar email
-    if (email.length === 0) {
-        mostrarError('email', 'El email es requerido');
-        esValido = false;
-    } else if (!validarEmail(email)) {
-        mostrarError('email', 'Ingrese un email válido (ejemplo: usuario@dominio.com)');
-        esValido = false;
-    }
-    
-    // Validar mensaje
-    if (mensaje.length === 0) {
-        mostrarError('mensaje', 'El mensaje es requerido');
-        esValido = false;
-    } else if (mensaje.length < 10) {
-        mostrarError('mensaje', 'El mensaje debe tener al menos 10 caracteres');
-        esValido = false;
-    } else if (mensaje.length > 500) {
-        mostrarError('mensaje', 'El mensaje no puede exceder 500 caracteres');
-        esValido = false;
-    }
-    
-    return esValido;
-}
-
-form.addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevenir envío normal del formulario
-    
-    // Validar formulario antes de enviar
-    if (!validarFormulario()) {
-        return;
-    }
-    
-    // Ocultar mensajes anteriores
-    mensajeExito.style.display = 'none';
-    mensajeError.style.display = 'none';
-    mensajeCargando.style.display = 'block';
-    btnEnviar.disabled = true;
-    
-    // Obtener datos del formulario
-    const formData = new FormData(form);
-    
-    // Obtener token CSRF
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
-    
-    // Enviar datos por AJAX
-    fetch('{{ route("contacto.store") }}', {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': csrfToken
-        },
-        body: formData,
-        credentials: 'same-origin'
-    })
-    .then(response => {
-        if (!response.ok) {
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.includes("application/json")) {
-                return response.json().then(err => { throw err; });
-            } else {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-        }
-        return response.json();
-    })
-    .then(data => {
-        mensajeCargando.style.display = 'none';
-        btnEnviar.disabled = false;
-        
-        if (data.success) {
-            // Éxito
-            mensajeExito.textContent = data.message;
-            mensajeExito.style.display = 'block';
-            form.reset(); // Limpiar formulario
-            
-            // Limpiar todos los errores
-            ['nombre', 'apellido', 'email', 'mensaje'].forEach(campo => {
-                limpiarError(campo);
-            });
-            
-            // Ocultar mensaje de éxito después de 5 segundos
-            setTimeout(() => {
-                mensajeExito.style.display = 'none';
-            }, 5000);
-        } else {
-            // Error
-            let errorMsg = data.message;
-            if (data.errors && data.errors.length > 0) {
-                errorMsg += ': ' + data.errors.join(', ');
-            }
-            mensajeError.textContent = errorMsg;
-            mensajeError.style.display = 'block';
-            
-            // Ocultar mensaje de error después de 8 segundos
-            setTimeout(() => {
-                mensajeError.style.display = 'none';
-            }, 8000);
-        }
-    })
-    .catch(error => {
-        mensajeCargando.style.display = 'none';
-        btnEnviar.disabled = false;
-        
-        console.error('Error:', error);
-        let displayError = 'Error de conexión. Por favor, inténtalo de nuevo.';
-        
-        // Si el error es un objeto con success, usar su mensaje
-        if (error && typeof error === 'object') {
-            if (error.success === false && error.message) {
-                displayError = error.message;
-            } else if (error.message) {
-                if (!error.message.includes('CSRF token mismatch')) {
-                    displayError = error.message;
-                }
-            }
-        } else if (typeof error === 'string') {
-            displayError = error;
-        }
-        
-        // No mostrar errores técnicos al usuario
-        if (displayError.includes('SQLSTATE') || displayError.includes('Unknown column') || displayError.includes('Connection')) {
-            displayError = 'Error al enviar el mensaje. Por favor, inténtalo de nuevo.';
-        }
-        
-        mensajeError.textContent = displayError;
+                mensajeError.textContent = (window.NutriKidsMessages ? NutriKidsMessages.fromCatch(error) : 'No se pudo completar la acción. Inténtalo de nuevo.');
         mensajeError.style.display = 'block';
         
         // Ocultar mensaje de error después de 8 segundos
