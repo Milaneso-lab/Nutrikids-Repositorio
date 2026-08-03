@@ -14,7 +14,9 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_VERSION": "v1"
+        "EXPO_PUBLIC_API_VERSION": "v1",
+        "EXPO_PUBLIC_API_BASE_URL": "https://nutrikids-fastapi-production.up.railway.app",
+        "EXPO_PUBLIC_EAS_PROJECT_ID": "c18963f5-aa18-4f33-93a0-f681ac647a54"
       }
     },
     "production": {
