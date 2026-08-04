@@ -18,7 +18,7 @@ from config import settings
 from database import Base, engine
 from routers import auth, citas, comentarios, contactos, discusiones, evaluaciones, menus, pacientes, reportes, users
 from prometheus_fastapi_instrumentator import Instrumentator
-from seed import seed_dev_users_if_missing
+from seed import activate_pending_padre_accounts, seed_dev_users_if_missing
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("nutrikids")
@@ -101,6 +101,7 @@ def on_startup() -> None:
     if not skip:
         Base.metadata.create_all(bind=engine)
     seed_dev_users_if_missing()
+    activate_pending_padre_accounts()
     logger.info("NutriKids API started env=%s", security_settings.environment)
 
 

@@ -117,6 +117,12 @@ class RateLimiter:
         key = f"{self.prefix}:{global_rate_limit_key(request)}"
         return not get_rate_limit_backend().hit(key, self.limit, self.window_seconds)
 
+    def check_identifier(self, identifier: str) -> bool:
+        """True si el identificador (p. ej. email) excedió el límite."""
+        normalized = identifier.strip().lower()
+        key = f"{self.prefix}:{normalized or 'unknown'}"
+        return not get_rate_limit_backend().hit(key, self.limit, self.window_seconds)
+
 
 def rate_limit_json_response() -> JSONResponse:
     return JSONResponse(
@@ -131,7 +137,7 @@ def rate_limit_json_response() -> JSONResponse:
     )
 
 
-login_rate_limiter = RateLimiter(security_settings.rate_limit_login_per_min, prefix="login")
+login_rate_limiter = RateLimiter(security_settings.effective_login_rate_limit, prefix="login")
 register_rate_limiter = RateLimiter(security_settings.rate_limit_register_per_min, prefix="register")
 contact_rate_limiter = RateLimiter(security_settings.rate_limit_contact_per_min, prefix="contact")
 global_rate_limiter = RateLimiter(security_settings.effective_global_rate_limit, prefix="global")

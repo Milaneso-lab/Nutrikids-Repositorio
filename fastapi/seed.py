@@ -36,6 +36,34 @@ DEV_USERS = [
 ]
 
 
+def activate_pending_padre_accounts() -> None:
+    """Tras rebuild de Postgres, padres registrados quedan pendientes sin flujo de verificación."""
+    import logging
+
+    logger = logging.getLogger("nutrikids")
+    db: Session = SessionLocal()
+    try:
+        pending = (
+            db.query(Usuario)
+            .filter(
+                Usuario.rol == "padre",
+                (Usuario.estado.is_(None)) | (Usuario.estado == "pendiente_verificacion"),
+            )
+            .all()
+        )
+        if not pending:
+            return
+        for user in pending:
+            user.estado = "activo"
+        db.commit()
+        logger.info("Cuentas padre activadas al arranque: %s", len(pending))
+    except Exception as exc:
+        db.rollback()
+        logger.warning("No se pudieron activar cuentas padre pendientes: %s", exc)
+    finally:
+        db.close()
+
+
 def seed_dev_users_if_missing() -> None:
     env = os.getenv("NUTRIKIDS_ENVIRONMENT", os.getenv("NUTRIKIDS_ENV", "development")).lower()
     enable = os.getenv("NUTRIKIDS_ENABLE_DEV_SEED", "true" if env == "development" else "false").lower()

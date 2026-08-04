@@ -43,11 +43,23 @@ class AuthController extends Controller
 
             $rol = $user->rol ?? 'padre';
 
-            if (Schema::hasColumn('usuarios', 'estado') && ($user->estado ?? 'activo') !== 'activo') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tu cuenta no está activa. Contacta al administrador.',
-                ], 403);
+            if (Schema::hasColumn('usuarios', 'estado')) {
+                $estado = $user->estado ?? 'activo';
+                if ($estado === 'suspendido') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tu cuenta está suspendida. Contacta al administrador.',
+                    ], 403);
+                }
+                if ($estado === 'pendiente_verificacion' && $rol === 'padre') {
+                    $user->estado = 'activo';
+                    $user->save();
+                } elseif ($estado !== 'activo') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tu cuenta no está activa. Contacta al administrador.',
+                    ], 403);
+                }
             }
 
             $this->loginService->loginUser($user);

@@ -688,7 +688,9 @@ def iniciar_sesion():
     try:
         r = api_v1_post("/auth/login", {"email": email, "contrasena": contrasena})
         if not r.ok:
-            return jsonify({"success": False, "message": "Email o contraseña incorrectos."}), 401
+            body = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+            msg = mensaje_desde_api(body if isinstance(body, dict) else None, "Email o contraseña incorrectos.")
+            return jsonify({"success": False, "message": msg}), r.status_code
         out = r.json()
         rol = out.get("rol", "")
         if rol == "admin":

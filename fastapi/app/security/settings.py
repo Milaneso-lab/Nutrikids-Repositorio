@@ -49,6 +49,12 @@ class SecuritySettings(BaseSettings):
     audit_log_enabled: bool = True
 
     @property
+    def effective_login_rate_limit(self) -> int:
+        if self.environment == "development":
+            return max(self.rate_limit_login_per_min, 30)
+        return max(self.rate_limit_login_per_min, 30)
+
+    @property
     def effective_global_rate_limit(self) -> int:
         """La app móvil genera muchas peticiones legítimas por sesión."""
         if self.environment == "development":

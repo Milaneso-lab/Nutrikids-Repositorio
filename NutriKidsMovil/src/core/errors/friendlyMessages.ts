@@ -12,7 +12,7 @@ const FRIENDLY_MESSAGES: Record<AppErrorCode, string> = {
   [AppErrorCode.Validation]: 'Revisa los datos ingresados.',
   [AppErrorCode.Conflict]: 'Ya existe un registro con esos datos.',
   [AppErrorCode.Server]: GENERIC_ERROR,
-  [AppErrorCode.Unavailable]: GENERIC_ERROR,
+  [AppErrorCode.Unavailable]: 'El servicio está ocupado. Espera un momento e inténtalo de nuevo.',
   [AppErrorCode.Cancelled]: 'La operación fue cancelada.',
 };
 

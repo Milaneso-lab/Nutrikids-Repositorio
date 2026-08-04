@@ -493,7 +493,12 @@
                 }
 
                 if (!result.ok || !data.success) {
-                    return postLaravelIniciarSesion(LARAVEL_INICIAR_SESION, email, contrasena);
+                    loading.style.display = 'none';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Iniciar sesión';
+                    alertError.textContent = data.message || 'Email o contraseña incorrectos.';
+                    alertError.style.display = 'block';
+                    return null;
                 }
 
                 loading.style.display = 'none';

@@ -101,6 +101,9 @@ export function normalizeError(error: unknown): AppError {
         cause: error,
       });
     }
+    if (status === 429) {
+      return new AppError(message, AppErrorCode.Unavailable, { statusCode: status, cause: error });
+    }
     if (status === 503) {
       return new AppError(GENERIC_ERROR, AppErrorCode.Unavailable, { statusCode: status, cause: error });
     }

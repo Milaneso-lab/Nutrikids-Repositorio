@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr, Field
 from starlette.requests import Request
 
@@ -135,8 +135,13 @@ def get_nino_auth_service(db: Session = Depends(get_db)) -> NinoAuthService:
     return NinoAuthService(db)
 
 
-@router.post("/login", response_model=TokenPairOutV1, dependencies=[Depends(login_rate_limiter)])
+@router.post("/login", response_model=TokenPairOutV1)
 def login_v1(payload: LoginInV1, request: Request, service: AuthService = Depends(get_auth_service)):
+    if login_rate_limiter.check_identifier(str(payload.email)):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Demasiadas solicitudes. Intente más tarde.",
+        )
     result = service.login(
         payload.email,
         payload.contrasena,
@@ -221,12 +226,17 @@ def password_reset_v1(
     return MessageOutV1(message="Contraseña actualizada")
 
 
-@router.post("/nino/acceso", response_model=NinoAccesoOutV1, dependencies=[Depends(login_rate_limiter)])
+@router.post("/nino/acceso", response_model=NinoAccesoOutV1)
 def nino_acceso_v1(
     payload: NinoAccesoInV1,
     request: Request,
     service: NinoAuthService = Depends(get_nino_auth_service),
 ):
+    if login_rate_limiter.check_identifier(payload.codigo_vinculacion):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Demasiadas solicitudes. Intente más tarde.",
+        )
     return NinoAccesoOutV1.model_validate(
         service.acceso(
             payload.codigo_vinculacion,

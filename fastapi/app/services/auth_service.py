@@ -66,6 +66,14 @@ class AuthService:
             log_security_event(self.db, "login_failed", recurso=email, ip_address=ip)
             raise ValidationError("Credenciales inválidas")
 
+        estado = (user.estado or "activo").strip()
+        if estado == "suspendido":
+            log_security_event(self.db, "login_blocked_suspended", user.id_usuario, "auth/login", ip)
+            raise ValidationError("Tu cuenta está suspendida. Contacta al administrador.")
+        if estado == "pendiente_verificacion" and user.rol == "padre":
+            user.estado = "activo"
+            user.email_verificado_en = datetime.now(timezone.utc)
+
         self._record_login_attempt(email, ip, True)
         user.ultimo_login_en = datetime.now(timezone.utc)
         access, jti = create_access_token(user.id_usuario, user.rol)
@@ -182,7 +190,7 @@ class AuthService:
             email=data["email"],
             contrasena=hash_password(data["contrasena"]),
             rol="padre",
-            estado="pendiente_verificacion",
+            estado="activo",
         )
         self.db.add(user)
         self.db.commit()
