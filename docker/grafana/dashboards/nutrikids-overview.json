@@ -11,12 +11,12 @@
       "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "id": 1,
-      "title": "Peticiones HTTP FastAPI",
+      "title": "Peticiones HTTP FastAPI (req/s)",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total[1m]))",
-          "legendFormat": "req/s",
+          "expr": "sum(rate(http_requests_total{job=\"fastapi\"}[1m]))",
+          "legendFormat": "total",
           "refId": "A"
         }
       ]
@@ -30,7 +30,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"fastapi\"}[5m])) by (le))",
           "legendFormat": "p95",
           "refId": "A"
         }
@@ -38,10 +38,40 @@
     },
     {
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
-      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
       "id": 3,
-      "title": "Uso CPU contenedores",
+      "title": "Peticiones por código HTTP",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"fastapi\"}[1m])) by (status)",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "title": "Peticiones por handler",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "topk(8, sum(rate(http_requests_total{job=\"fastapi\"}[5m])) by (handler))",
+          "legendFormat": "{{handler}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "id": 5,
+      "title": "Uso CPU contenedores (local Docker)",
       "type": "timeseries",
       "targets": [
         {
@@ -54,9 +84,9 @@
     {
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
       "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
-      "id": 4,
-      "title": "Memoria contenedores",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "id": 6,
+      "title": "Memoria contenedores (local Docker)",
       "type": "timeseries",
       "targets": [
         {
@@ -76,5 +106,5 @@
   "timezone": "browser",
   "title": "NutriKids — Overview",
   "uid": "nutrikids-overview",
-  "version": 1
+  "version": 2
 }

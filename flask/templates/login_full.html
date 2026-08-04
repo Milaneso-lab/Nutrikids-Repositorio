@@ -591,7 +591,11 @@
                 credentials: 'same-origin'
             })
             .then(function(res) {
-                return res.json().then(function(data) { return { ok: res.ok, data: data }; });
+                var ct = res.headers.get('content-type') || '';
+                if (!ct.includes('application/json')) {
+                    throw new Error('Respuesta inesperada del servidor. Inténtalo de nuevo.');
+                }
+                return res.json().then(function(data) { return { ok: res.ok, status: res.status, data: data }; });
             })
             .then(function(result) {
                 loading.style.display = 'none';

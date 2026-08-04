@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
@@ -60,6 +61,7 @@ class AuthService:
             log_security_event(self.db, "login_locked", recurso=email, ip_address=ip)
             raise ValidationError("Cuenta temporalmente bloqueada por intentos fallidos")
 
+        email = email.strip().lower()
         user = self.db.query(Usuario).filter(Usuario.email == email).first()
         if not user or not verify_password(contrasena, user.contrasena):
             self._record_login_attempt(email, ip, False)
@@ -178,6 +180,7 @@ class AuthService:
         self.db.commit()
 
     def register_padre(self, data: dict, ip: str | None = None) -> Usuario:
+        data = {**data, "email": str(data["email"]).strip().lower()}
         issues = validate_password_policy(data["contrasena"])
         if issues:
             raise ValidationError("Contraseña no cumple la política", details=[{"field": "contrasena", "issue": i} for i in issues])
@@ -193,7 +196,11 @@ class AuthService:
             estado="activo",
         )
         self.db.add(user)
-        self.db.commit()
+        try:
+            self.db.commit()
+        except IntegrityError:
+            self.db.rollback()
+            raise ConflictError("Email ya registrado")
         self.db.refresh(user)
         log_security_event(self.db, "register_padre", user.id_usuario, "auth/register", ip)
         return user

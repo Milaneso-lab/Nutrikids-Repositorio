@@ -1,4 +1,7 @@
 # NutriKids — Flask (padres): frontend y proxy a FastAPI
+# Variables Railway recomendadas:
+#   NUTRIKIDS_API_INTERNAL_URL=http://nutrikids-sitioweb.railway.internal:8000
+#   NUTRIKIDS_API_PUBLIC_URL=https://nutrikids-sitioweb.up.railway.app  (fallback)
 FROM python:3.10-slim
 
 WORKDIR /app

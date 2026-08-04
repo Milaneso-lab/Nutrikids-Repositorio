@@ -2,11 +2,17 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
-# Scrape vía red privada de Railway (*.railway.internal) — sin exponer FastAPI
-# ni Prometheus a más superficie pública de la ya necesaria.
+# Scrape vía red privada de Railway (*.railway.internal).
+# Incluye alias comunes del servicio FastAPI en distintos despliegues.
 scrape_configs:
   - job_name: fastapi
     metrics_path: /metrics
     static_configs:
       - targets:
+          - nutrikids-sitioweb.railway.internal:8000
           - nutrikids-fastapi.railway.internal:8000
+
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090

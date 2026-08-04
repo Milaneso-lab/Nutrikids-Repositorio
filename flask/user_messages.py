@@ -36,6 +36,18 @@ def mensaje_desde_api(body: dict[str, Any] | None, fallback: str = GENERIC_ERROR
     if not isinstance(body, dict):
         return fallback
 
+    error_block = body.get("error")
+    if isinstance(error_block, dict):
+        message = error_block.get("message")
+        if message is not None:
+            detalles = []
+            for item in error_block.get("details") or []:
+                if isinstance(item, dict) and item.get("issue"):
+                    detalles.append(str(item["issue"]))
+            if detalles:
+                return sanitizar_mensaje("; ".join(detalles), sanitizar_mensaje(str(message), fallback))
+            return sanitizar_mensaje(str(message), fallback)
+
     errors = body.get("errors")
     if isinstance(errors, list) and errors:
         partes = [str(e) for e in errors if es_mensaje_usuario(str(e))]

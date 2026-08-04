@@ -36,7 +36,24 @@ if _db_uri:
     db = SQLAlchemy(app)
 else:
     db = None  # Solo UI + API HTTP (sin conexión directa a BD)
-API_BASE_URL = os.getenv("NUTRIKIDS_API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+
+
+def _resolve_api_base_url() -> str:
+    """En Railway usa red privada si la URL pública apunta a localhost."""
+    explicit = os.getenv("NUTRIKIDS_API_BASE_URL", "").strip().rstrip("/")
+    if explicit and not explicit.startswith(("http://127.0.0.1", "http://localhost")):
+        return explicit
+
+    if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_SERVICE_NAME"):
+        return os.getenv(
+            "NUTRIKIDS_API_INTERNAL_URL",
+            "http://nutrikids-sitioweb.railway.internal:8000",
+        ).rstrip("/")
+
+    return explicit or "http://127.0.0.1:8000"
+
+
+API_BASE_URL = _resolve_api_base_url()
 LARAVEL_PUBLIC_URL = os.getenv("LARAVEL_PUBLIC_URL", "http://127.0.0.1:8080").rstrip("/")
 
 # El bloque de credenciales de demo del login publica usuarios y contraseñas
@@ -132,7 +149,21 @@ def api_v1_get(path: str, token: str | None = None, params: dict | None = None) 
 def api_v1_post(path: str, payload: dict[str, Any] | None = None, token: str | None = None) -> requests.Response:
     h = api_headers(token)
     h["Content-Type"] = "application/json"
-    return requests.post(f"{API_BASE_URL}/api/v1{path}", headers=h, json=payload or {}, timeout=15)
+    urls = [API_BASE_URL]
+    public_fallback = os.getenv("NUTRIKIDS_API_PUBLIC_URL", "").strip().rstrip("/")
+    if public_fallback and public_fallback not in urls:
+        urls.append(public_fallback)
+
+    last_exc: requests.RequestException | None = None
+    for base in urls:
+        try:
+            return requests.post(f"{base}/api/v1{path}", headers=h, json=payload or {}, timeout=20)
+        except requests.RequestException as exc:
+            last_exc = exc
+            continue
+    if last_exc is not None:
+        raise last_exc
+    raise requests.RequestException("No se pudo contactar la API NutriKids")
 
 
 def _merge_api_errors(*errors: str | None) -> str | None:
@@ -753,14 +784,24 @@ def registrar_usuario():
     try:
         r = api_v1_post("/auth/register", payload)
         if r.status_code in (401, 403):
-            return jsonify({"success": False, "message": "No se pudo registrar."}), r.status_code
+            body = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+            msg = mensaje_desde_api(body if isinstance(body, dict) else None, "No se pudo registrar.")
+            return jsonify({"success": False, "message": msg}), r.status_code
         if r.status_code >= 400:
-            body = r.json() if r.content else {}
+            body = r.json() if r.content and r.headers.get("content-type", "").startswith("application/json") else {}
             msg = mensaje_desde_api(body if isinstance(body, dict) else None, "No se pudo completar el registro.")
             return jsonify({"success": False, "message": msg}), r.status_code
         return jsonify({"success": True, "message": "Usuario registrado.", "user": r.json()})
-    except requests.RequestException:
-        return jsonify({"success": False, "message": GENERIC_ERROR}), 500
+    except requests.RequestException as exc:
+        import logging
+
+        logging.getLogger("nutrikids.flask").error("Registro: API no disponible (%s)", exc)
+        return jsonify(
+            {
+                "success": False,
+                "message": "No pudimos conectar con el servidor. Inténtalo de nuevo en unos segundos.",
+            }
+        ), 503
 
 
 if __name__ == "__main__":

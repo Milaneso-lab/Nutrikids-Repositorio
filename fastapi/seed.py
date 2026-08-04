@@ -4,9 +4,16 @@ import os
 
 from sqlalchemy.orm import Session
 
-from database import SessionLocal
+from database import SessionLocal, engine
 from models import Usuario
 from security import hash_password
+
+RBAC_ROLES = (
+    ("admin", "Administrador del sistema"),
+    ("nutriologo", "Profesional de nutrición"),
+    ("padre", "Padre, madre o tutor"),
+    ("nino", "Perfil infantil vinculado"),
+)
 
 DEV_USERS = [
     {
@@ -34,6 +41,36 @@ DEV_USERS = [
         "rol": "padre",
     },
 ]
+
+
+def ensure_rbac_roles() -> None:
+    """Garantiza roles RBAC tras rebuild de Postgres (rol_id NOT NULL en usuarios)."""
+    import logging
+
+    from sqlalchemy import text
+
+    logger = logging.getLogger("nutrikids")
+    try:
+        with engine.begin() as conn:
+            has_roles = conn.execute(
+                text(
+                    "SELECT 1 FROM information_schema.tables "
+                    "WHERE table_schema = 'public' AND table_name = 'roles'"
+                )
+            ).scalar()
+            if not has_roles:
+                return
+            for nombre, descripcion in RBAC_ROLES:
+                conn.execute(
+                    text(
+                        "INSERT INTO roles (nombre, descripcion) "
+                        "SELECT :nombre, :descripcion "
+                        "WHERE NOT EXISTS (SELECT 1 FROM roles WHERE nombre = :nombre)"
+                    ),
+                    {"nombre": nombre, "descripcion": descripcion},
+                )
+    except Exception as exc:
+        logger.warning("RBAC seed skipped: %s", exc)
 
 
 def activate_pending_padre_accounts() -> None:
