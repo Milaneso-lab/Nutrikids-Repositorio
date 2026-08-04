@@ -4,6 +4,7 @@ import { HTTP_TIMEOUT_MS } from '@core/config/constants';
 import { getApiRootUrl } from '@core/config/env';
 import { AppErrorCode } from '@core/errors/AppError';
 import { logError, normalizeError } from '@core/errors/errorHandler';
+import { assertHostAllowed } from '@core/security/networkFirewall';
 import { refreshAccessToken } from '@services/auth/tokenManager';
 import { isTransientError } from '@shared/utils/retry';
 
@@ -79,6 +80,7 @@ function attachNgrokHeaders(config: InternalAxiosRequestConfig): void {
 function attachRequestInterceptor(client: AxiosInstance): void {
   client.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
     config.baseURL = getApiRootUrl();
+    assertHostAllowed(config.baseURL);
     attachNgrokHeaders(config);
     if (tokenProvider) {
       const token = await tokenProvider();

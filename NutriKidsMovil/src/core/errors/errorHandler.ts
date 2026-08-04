@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import { recordDiagnostic } from '@core/monitoring/diagnostics';
+
 import { AppError, AppErrorCode } from './AppError';
 import { GENERIC_ERROR, sanitizeMessage, sanitizeMessageList } from './userMessages';
 
@@ -120,6 +122,13 @@ export function normalizeError(error: unknown): AppError {
 }
 
 export function logError(error: AppError): void {
+  recordDiagnostic({
+    category: 'network-error',
+    severity: 'error',
+    message: error.message,
+    meta: { code: error.code, statusCode: error.statusCode },
+  });
+
   if (__DEV__) {
     console.error('[NutriKids Error]', {
       code: error.code,

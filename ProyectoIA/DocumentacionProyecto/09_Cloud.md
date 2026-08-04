@@ -28,14 +28,16 @@ Justificación: despliegue de contenedores Docker existentes casi sin cambios, P
 
 ## 2. Balanceo de carga
 
-- **Capa 7** (HTTP): Nginx/Traefik en Etapa 1 (dentro del propio compose, `08_Docker.md` §1) o ALB gestionado en Etapa 2. Balancea entre réplicas de `api`, que son **stateless por diseño** (`02_Arquitectura.md` §3.1) — requisito indispensable para que el balanceo funcione sin *sticky sessions*.
+- **Implementado en Etapa 1 (Railway):** el servicio `nutrikids-fastapi` corre con réplicas horizontales nativas de Railway (Settings → Scale). Railway distribuye automáticamente el tráfico público entre las réplicas de la región (balanceo aleatorio por request, sin *sticky sessions*) — ver evidencia en `README_SECURITY.md` §3. Esto es posible porque `api` es **stateless por diseño** (`02_Arquitectura.md` §3.1).
+- **Alternativa self-hosted/Docker:** Nginx (`docker-compose.infra.yml`, perfil `gateway`) con `least_conn` entre `fastapi`/`fastapi-b` (`docker/nginx/nginx.conf`), para entornos sin PaaS.
 - Health checks activos (`GET /health`, ya existente) determinan qué réplica recibe tráfico.
 - Laravel y `web` (Flask/Next.js) no necesitan balanceo horizontal en Etapa 1 (tráfico interno/público bajo respectivamente), se revisita si el criterio de §1 se cumple para ellos específicamente.
+- En Etapa 2, esto se reemplaza por un **ALB (Application Load Balancer)** gestionado si se migra a AWS/GCP.
 
 ## 3. Escalabilidad de base de datos
 
 - Vertical primero (aumentar recursos de la instancia gestionada) — más simple y suficiente para el volumen esperado en Etapa 1 y buena parte de Etapa 2.
-- Réplica de lectura quando reportes/analítica compitan de forma medible con las escrituras transaccionales (monitoreado vía métricas de `09_Cloud.md`/Prometheus, no una decisión anticipada sin datos).
+- Réplica de lectura quando reportes/analítica compitan de forma medible con las escrituras transaccionales (monitoreado vía métricas de Prometheus/Grafana — desplegados como servicios `nutrikids-prometheus`/`nutrikids-grafana` en el mismo proyecto Railway, ver `README_SECURITY.md` §4 —, no una decisión anticipada sin datos).
 - Particionado de tablas de alto volumen (`habito_registros`, `alertas` — identificadas en `03_BaseDatos.md` §8) solo cuando el tamaño de tabla lo justifique en métricas reales, no de antemano.
 
 ## 4. Firewall y seguridad de red en la nube

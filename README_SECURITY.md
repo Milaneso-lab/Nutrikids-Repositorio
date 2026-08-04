@@ -138,7 +138,17 @@ Para la elaboración del reporte con evidencias en PDF, utiliza las siguientes r
     }
     ```
 
-### 3. Evidencia de Cabeceras de Seguridad HTTP (Headers en Respuesta)
+### 3. Evidencia de Balanceo de Carga (Réplicas en Railway)
+*   **Servicio:** `nutrikids-fastapi` en Railway (Settings → Scale → 2 réplicas).
+*   **Acción:** Realiza varias peticiones consecutivas a `GET https://nutrikids-sitioweb.up.railway.app/health`.
+*   **Resultado esperado (Captura):** En los logs de Railway (`Deployments` → `View Logs`, o `railway logs`), las peticiones aparecen servidas por distintos valores de la variable de entorno `RAILWAY_REPLICA_ID` — evidencia de que Railway está distribuyendo el tráfico entre réplicas (balanceo de carga nativo). Alternativa local equivalente: `docker compose -f docker-compose.yml -f docker-compose.infra.yml --profile gateway up -d` y observar `upstream=` en los logs de `nutrikids_gateway` (nginx `least_conn` entre `fastapi`/`fastapi-b`).
+
+### 4. Evidencia de Monitoreo (Prometheus + Grafana en Railway)
+*   **Servicios:** `nutrikids-prometheus` (privado, solo red interna) y `nutrikids-grafana` (dominio público) en el mismo proyecto Railway.
+*   **Acción:** Abrir la URL pública de `nutrikids-grafana`, iniciar sesión y abrir el dashboard **NutriKids Overview**.
+*   **Resultado esperado (Captura):** Métricas reales de la API (latencia, tasa de peticiones, códigos de estado) scrapeadas desde `nutrikids-fastapi.railway.internal:8000/metrics` vía Prometheus, sin exponer Prometheus públicamente. Alternativa local equivalente: `docker compose -f docker-compose.yml -f docker-compose.infra.yml --profile monitoring up -d` y abrir `http://localhost:3000`.
+
+### 5. Evidencia de Cabeceras de Seguridad HTTP (Headers en Respuesta)
 *   **Endpoint:** `GET http://localhost:8000/health` (FastAPI) o `GET http://localhost:5000/` (Flask)
 *   **Acción:** Realiza una petición `GET` simple y revisa la sección **Headers** (Cabeceras) de la respuesta del servidor.
 *   **Resultado esperado (Captura):** Visualización de las cabeceras de seguridad inyectadas:
@@ -148,3 +158,22 @@ Para la elaboración del reporte con evidencias en PDF, utiliza las siguientes r
     X-XSS-Protection: 1; mode=block
     Referrer-Policy: strict-origin-when-cross-origin
     ```
+
+---
+
+## 5. Seguridad y Monitoreo de la App Móvil (Expo / React Native)
+
+La app móvil (`NutriKidsMovil/`) incorpora dos capas nuevas, ambas *self-contained* (sin servicios de terceros):
+
+### A. Firewall de Red del Cliente
+Implementado en [`NutriKidsMovil/src/core/security/networkFirewall.ts`](file:///c:/Uni%20-%20Milaneso/NutriKids_dividido%20%281%29/NutriKids_dividido/NutriKids/NutriKidsMovil/src/core/security/networkFirewall.ts) y conectado en el interceptor de peticiones de [`src/core/api/client.ts`](file:///c:/Uni%20-%20Milaneso/NutriKids_dividido%20%281%29/NutriKids_dividido/NutriKids/NutriKidsMovil/src/core/api/client.ts):
+*   **Funcionamiento:** Antes de que cualquier petición HTTP salga del dispositivo, se valida el host contra una allowlist (backend propio en Railway, IPs privadas/emulador para desarrollo, túneles ngrok). Si el host no está autorizado, la petición se bloquea con un error y el intento queda registrado.
+*   **Endurecimiento adicional:** `usesCleartextTraffic` en [`app.config.ts`](file:///c:/Uni%20-%20Milaneso/NutriKids_dividido%20%281%29/NutriKids_dividido/NutriKids/NutriKidsMovil/app.config.ts) ya no es `true` fijo — se deshabilita automáticamente cuando la app está compilada contra una URL de API HTTPS (Railway), permitiendo tráfico sin cifrar solo en el cliente de desarrollo local (LAN/emulador).
+
+### B. Monitoreo de Diagnóstico en Dispositivo
+Implementado en [`NutriKidsMovil/src/core/monitoring/diagnostics.ts`](file:///c:/Uni%20-%20Milaneso/NutriKids_dividido%20%281%29/NutriKids_dividido/NutriKids/NutriKidsMovil/src/core/monitoring/diagnostics.ts):
+*   Buffer acotado (últimos 100 eventos) de errores de red y de eventos del firewall (host permitido/bloqueado), alimentado desde `client.ts` y `errorHandler.ts`. A diferencia de la implementación anterior (solo `console.error` en `__DEV__`), este registro también existe en builds de producción, disponible para diagnóstico/soporte.
+
+### Verificación
+*   Pruebas unitarias: [`src/core/security/__tests__/networkFirewall.test.ts`](file:///c:/Uni%20-%20Milaneso/NutriKids_dividido%20%281%29/NutriKids_dividido/NutriKids/NutriKidsMovil/src/core/security/__tests__/networkFirewall.test.ts) — `cd NutriKidsMovil && npm test`.
+*   Evidencia manual: con la app corriendo, intentar forzar `EXPO_PUBLIC_API_BASE_URL` a un host fuera de la allowlist y confirmar que las peticiones son rechazadas por el firewall (log `[Firewall:BLOCKED]` en modo dev).

@@ -1,0 +1,6 @@
+# NutriKids — Prometheus para Railway: scrapea /metrics de FastAPI vía red privada.
+# Sin dominio público asignado: solo alcanzable dentro del proyecto Railway
+# vía nutrikids-prometheus.railway.internal:9090 (consumido por Grafana).
+FROM prom/prometheus:v2.54.1
+
+COPY docker/prometheus/prometheus.railway.yml /etc/prometheus/prometheus.yml

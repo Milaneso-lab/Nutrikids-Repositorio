@@ -1,5 +1,12 @@
 import { ExpoConfig, ConfigContext } from 'expo/config';
 
+// Cleartext (HTTP sin cifrar) solo se permite en el cliente de desarrollo o si la API
+// configurada no es HTTPS (LAN/emulador). Builds preview/production apuntando a Railway
+// (HTTPS) quedan con cleartext deshabilitado — hardening real, no solo declarativo.
+const isDevProfile = process.env.EAS_BUILD_PROFILE === 'development';
+const configuredApiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
+const allowCleartext = isDevProfile || !configuredApiBaseUrl.startsWith('https://');
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'NutriKids',
@@ -21,7 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       monochromeImage: './assets/android-icon-monochrome.png',
     },
     package: 'com.nutrikids.movil',
-    usesCleartextTraffic: true,
+    usesCleartextTraffic: allowCleartext,
     softwareKeyboardLayoutMode: 'resize',
     predictiveBackGestureEnabled: false,
   },

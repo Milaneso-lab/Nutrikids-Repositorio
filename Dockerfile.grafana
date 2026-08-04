@@ -1,0 +1,7 @@
+# NutriKids — Grafana para Railway: reutiliza el dashboard y el provider local,
+# pero con el datasource apuntando a Prometheus vía red privada de Railway.
+FROM grafana/grafana:11.2.0
+
+COPY docker/grafana/dashboards /var/lib/grafana/dashboards
+COPY docker/grafana/provisioning/dashboards /etc/grafana/provisioning/dashboards
+COPY docker/grafana/provisioning-railway/datasources /etc/grafana/provisioning/datasources
