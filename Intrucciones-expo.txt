@@ -1,0 +1,518 @@
+================================================================================
+NUTRIKIDS — GUÍA PARA EXPOSICIÓN TÉCNICA (máx. 10 minutos)
+Archivo: Intrucciones-expo.txt
+Repositorio: https://github.com/Milaneso-lab/Nutrikids-Repositorio
+================================================================================
+
+A. INFORMACIÓN GENERAL DEL PROYECTO
+--------------------------------------------------------------------------------
+
+Nombre: NutriKids
+
+Objetivo general:
+  Plataforma integral de nutrición infantil que conecta padres, niños,
+  nutriólogos y administradores para registrar hábitos, progreso, citas y
+  comunicación familiar con enfoque positivo.
+
+Problema que resuelve:
+  - Dificultad de los padres para monitorear hábitos alimenticios de sus hijos.
+  - Falta de herramientas lúdicas para que el niño participe activamente.
+  - Necesidad de un panel clínico para nutriólogos y administración central.
+
+Usuarios principales:
+  - Padres (Web Flask + portal + App móvil)
+  - Niños (App móvil con PIN)
+  - Nutriólogos (Laravel)
+  - Administradores (Laravel /admin)
+
+Tecnologías utilizadas:
+  - Web pública padres: Flask (Python)
+  - Panel admin/nutriólogo: Laravel 11 (PHP)
+  - API REST: FastAPI (Python) — contrato /api/v1/*
+  - Base de datos: PostgreSQL 15
+  - Cache/rate limit: Redis 7
+  - App móvil: React Native + Expo (NutriKidsMovil/)
+  - Contenedores: Docker + Docker Compose
+  - Nube: Railway (servicios desplegados)
+  - Monitoreo: Prometheus + Grafana (stack local demo)
+  - Gateway/balanceador: Nginx (HTTPS + upstream FastAPI x2)
+
+
+B. ARQUITECTURA
+--------------------------------------------------------------------------------
+
+Componentes:
+
+  [Internet / Usuario]
+        |
+        v
+  +------------------+     Railway (producción): TLS automático
+  | Nginx Gateway    |     Local demo: https://localhost:9443
+  | (balanceador)    |
+  +--------+---------+
+           |
+     +-----+-----+----------+
+     |           |          |
+     v           v          v
+  Flask:5000  Laravel:8080  FastAPI:8000 (+ réplica fastapi-b)
+  (sitio web) (admin)       (API JWT)
+     |           |          |
+     +-----+-----+----------+
+           |
+           v
+  +------------------+
+  | PostgreSQL       |  Red privada Docker (private-network, internal)
+  | Redis            |  Sin exposición pública de Redis
+  +------------------+
+
+Comunicación:
+  - Flask NO escribe directo en BD para comunidad; hace proxy HTTP a FastAPI.
+  - Laravel admin usa Eloquent sobre PostgreSQL.
+  - App móvil → HTTPS → FastAPI /api/v1/* → PostgreSQL.
+  - Flask lee comentarios/discusiones vía GET /api/comentarios y /api/discusiones.
+
+Servidor PÚBLICO (acceso evaluadores):
+  - Railway: nutrikids-flask-production, nutrikids-laravel-production,
+    nutrikids-sitioweb (FastAPI)
+  - Local demo: puertos 5000, 8080, 8000 y gateway 9443
+
+Servidor PRIVADO:
+  - PostgreSQL y Redis en red Docker internal (private-network)
+  - Postgres solo en 127.0.0.1:5432 para herramientas locales (DBeaver/pgAdmin)
+
+Docker:
+  - docker-compose.yml — servicios base
+  - docker-compose.infra.yml — gateway + monitoreo (perfiles gateway, monitoring)
+
+Comando stack completo para demo:
+  powershell -ExecutionPolicy Bypass -File scripts/start-expo-stack.ps1
+
+  Equivalente:
+  docker compose -f docker-compose.yml -f docker-compose.infra.yml \
+    --profile gateway --profile monitoring up -d --build
+
+
+C. SEGURIDAD
+--------------------------------------------------------------------------------
+
+1) HASHING DE CONTRASEÑAS — CUMPLE
+   Algoritmo: bcrypt (cost factor 12)
+   Dónde:
+     - fastapi/app/security/crypto.py (hash_password, verify_password)
+     - Laravel Hash::make() / password_verify() en LoginService
+   Las contraseñas NUNCA se guardan en texto plano en PostgreSQL.
+
+   Demo:
+     - Mostrar columna usuarios.contrasena en pgAdmin: cadena bcrypt ($2y$...)
+     - Explicar: "Al login comparamos el hash, no la contraseña literal"
+
+2) VARIABLES DE ENTORNO Y SECRETOS — CUMPLE (con nota demo)
+   - .env real está en .gitignore
+   - Plantillas: .env.example, fastapi/.env.example
+   - FastAPI exige NUTRIKIDS_SECRET_KEY >= 32 caracteres al arrancar
+   - Flask exige FLASK_SECRET_KEY >= 32 caracteres
+   - Credenciales demo en seeders (solo entornos de prueba)
+
+3) JWT — CUMPLE (API móvil y clientes REST)
+   Implementación: fastapi/app/security/crypto.py + auth_service.py
+   - Access token: HS256, expira en 15 minutos
+   - Refresh token: opaco, rotación, almacenado como SHA-256 en BD
+   - Endpoints: POST /api/v1/auth/login, /refresh, /logout
+   - Protección RBAC: fastapi/app/security/rbac.py
+   - App móvil: NutriKidsMovil/src/services/auth/tokenManager.ts
+
+   Nota: Laravel admin usa sesión web (cookies), no JWT — es panel server-side.
+
+   Demo JWT:
+     1. POST http://localhost:8000/api/v1/auth/login
+        Body: {"email":"padre@nutrikids.com","contrasena":"Padre123*"}
+     2. Copiar access_token de la respuesta
+     3. GET http://localhost:8000/api/v1/familia/ninos
+        Header: Authorization: Bearer <token>
+     4. Repetir con token inválido → 401 Unauthorized
+
+4) HTTPS / SSL — CUMPLE
+   Producción Railway:
+     - https://nutrikids-sitioweb.up.railway.app (FastAPI)
+     - https://nutrikids-flask-production.up.railway.app (Flask)
+     - https://nutrikids-laravel-production.up.railway.app (Laravel)
+     - Certificado válido gestionado por Railway
+
+   Demo local:
+     - Gateway Nginx en https://localhost:9443 (certificado autofirmado dev)
+     - HTTP :9080 redirige a HTTPS
+     - Header HSTS en FastAPI producción (main.py security_middleware)
+
+   App móvil preview (eas.json):
+     EXPO_PUBLIC_API_BASE_URL=https://nutrikids-sitioweb.up.railway.app
+
+5) FIREWALL / RED — CUMPLE (parcial cloud físico)
+   Documento: docker/firewall/REGLAS-FIREWALL.md
+   - Redis: sin puerto público
+   - PostgreSQL: 127.0.0.1 only local; Railway red interna en nube
+   - pgAdmin, Prometheus, Grafana: 127.0.0.1 only
+   - Gateway Nginx: punto de entrada HTTPS consolidado
+
+   Pendiente externo: reglas ufw/Security Groups del VPS si migran fuera de Railway.
+
+
+D. MONITOREO — PROMETHEUS + GRAFANA
+--------------------------------------------------------------------------------
+
+Estado: IMPLEMENTADO (stack local con perfiles Docker)
+
+Componentes:
+  - Prometheus → http://127.0.0.1:9090
+  - Grafana    → http://127.0.0.1:3000
+    Usuario: admin (o GRAFANA_ADMIN_USER en .env)
+    Password: nutrikids_grafana (o GRAFANA_ADMIN_PASSWORD)
+  - Métricas FastAPI: GET http://localhost:8000/metrics
+    (prometheus-fastapi-instrumentator en fastapi/main.py)
+  - cAdvisor: CPU/memoria contenedores
+  - node-exporter: métricas del host
+  - postgres-exporter: métricas BD
+  - nginx-exporter: métricas del gateway
+
+Dashboard preconfigurado:
+  docker/grafana/dashboards/nutrikids-overview.json
+  Título: "NutriKids — Overview"
+
+Demo monitoreo (2 min):
+  1. Levantar stack: scripts/start-expo-stack.ps1
+  2. Generar tráfico: abrir https://localhost:9443 y /api/docs
+  3. Abrir Grafana → dashboard NutriKids — Overview
+  4. Mostrar: peticiones/seg, latencia p95, CPU y memoria contenedores
+  5. Abrir Prometheus → Status → Targets (fastapi, cadvisor, node)
+
+
+E. BALANCEADOR DE CARGA — NGINX
+--------------------------------------------------------------------------------
+
+Estado: IMPLEMENTADO
+
+Archivos:
+  - docker/nginx/nginx.conf
+  - docker/nginx/Dockerfile
+  - docker-compose.infra.yml → servicios nginx-gateway, fastapi-b
+
+Cómo funciona:
+  - Upstream fastapi_upstream con least_conn
+  - Instancias: fastapi:8000 y fastapi-b:8000
+  - Nginx distribuye peticiones /api/* entre ambas
+
+Demo balanceador:
+  1. docker compose ... --profile gateway up -d
+  2. curl -k https://localhost:9443/health (varias veces)
+  3. docker logs nutrikids_gateway — ver upstream alternado
+  4. Detener una réplica: docker stop nutrikids_fastapi_b
+  5. curl sigue respondiendo (failover a instancia activa)
+
+
+F. APLICACIÓN MÓVIL
+--------------------------------------------------------------------------------
+
+Ubicación: NutriKidsMovil/
+
+¿Por qué NO es copia de la Web?
+  Funciones exclusivas móviles:
+  - Modo niño con PIN y código de vinculación
+  - Retos/minijuegos con progreso gamificado
+  - Registro de hábitos diarios con mascota/compañero
+  - Calendario de hábitos del niño
+  - Notificaciones push (Expo)
+  - Modo oscuro nativo
+  - Experiencia táctil optimizada (tab bar niño/padre)
+
+Comunicación API:
+  - Base URL: EXPO_PUBLIC_API_BASE_URL (Railway HTTPS en builds preview)
+  - Cliente: src/core/api/client.ts (axios + interceptores JWT)
+  - Refresh automático: src/services/auth/tokenManager.ts
+
+Navegación:
+  - Auth: Splash → Onboarding → Login / ChildLogin
+  - Padre: tabs Familia, Hábitos, Comunicación, Más
+  - Niño: tabs Inicio, Hábitos, Retos, Más
+
+Demo móvil (1-2 min):
+  1. Abrir app instalada (APK USB o Expo)
+  2. Login padre: padre@nutrikids.com / Padre123*
+  3. Registrar hábito o agregar/editar niño
+  4. Cambiar a modo niño con PIN
+
+
+G. INTEGRACIÓN APP → API → BD → WEB
+--------------------------------------------------------------------------------
+
+Flujo arquitectónico:
+  APP MÓVIL → FastAPI /api/v1 → PostgreSQL → FastAPI → WEB
+
+Ejemplo REAL demostrable — Comentario en Web:
+  (Los comentarios se crean desde Web Flask, no desde app móvil;
+   la app móvil sincroniza niños, hábitos, retos, mensajes familiares)
+
+Ejemplo REAL — Niño registrado desde App visible en ecosistema:
+  1. App móvil (padre): Familia → Agregar niño → guardar
+  2. API: POST /api/v1/familia/ninos → PostgreSQL tabla ninos
+  3. Web Laravel admin o portal: el niño aparece en listados
+  4. App niño: acceso con PIN muestra el perfil creado
+
+Ejemplo REAL — Comentario/discusión Web con respuestas:
+  1. Web Flask: login padre → Comentarios o Discusiones
+  2. Publicar comentario → Flask proxy → FastAPI → PostgreSQL
+  3. Otro padre pulsa "Responder" → respuesta visible en cadena
+  4. Verificar en pgAdmin: tablas comentarios / respuestas_discusion
+
+Prueba sincronización (paso a paso evaluadores):
+  1. App: login padre, marcar hábito completado hoy
+  2. pgAdmin: SELECT * FROM registros_habitos ORDER BY id DESC LIMIT 5;
+  3. App: refrescar estadísticas — dato persiste
+  (El panel Web admin puede consultar pacientes/ninos vía Laravel)
+
+
+H. NUBE (RAILWAY)
+--------------------------------------------------------------------------------
+
+Despliegue actual (servicios Online en Railway):
+
+  | Servicio   | URL pública (HTTPS)                              |
+  |------------|---------------------------------------------------|
+  | FastAPI    | https://nutrikids-sitioweb.up.railway.app         |
+  | Flask      | https://nutrikids-flask-production.up.railway.app |
+  | Laravel    | https://nutrikids-laravel-production.up.railway.app |
+  | PostgreSQL | Red interna Railway (no IP pública)               |
+  | Redis      | Red interna Railway                               |
+
+Variables clave (ver .env.example):
+  - NUTRIKIDS_DATABASE_URL / DATABASE_URL
+  - NUTRIKIDS_SECRET_KEY, FLASK_SECRET_KEY
+  - NUTRIKIDS_CORS_ORIGINS (orígenes permitidos)
+  - POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+
+Migraciones:
+  - FastAPI: alembic upgrade head (fastapi/alembic/versions/)
+  - Laravel: php artisan migrate
+
+CORS:
+  - FastAPI CORSMiddleware en fastapi/main.py
+  - Lista blanca NUTRIKIDS_CORS_ORIGINS
+
+
+================================================================================
+MATRIZ RÚBRICA — ESTADO ACTUAL
+================================================================================
+
+| Criterio                         | Estado   | Evidencia principal                    |
+|----------------------------------|----------|----------------------------------------|
+| Hashing contraseñas              | CUMPLE   | bcrypt cost 12, crypto.py, Laravel Hash|
+| Encriptación / secretos          | CUMPLE   | .env, JWT HS256, cookies secure prod  |
+| JWT API                          | CUMPLE   | /api/v1/auth/*, tokenManager móvil     |
+| Servidor público                 | CUMPLE   | Railway HTTPS + Flask/Laravel/FastAPI   |
+| Servidor privado                 | CUMPLE   | PostgreSQL/Redis red internal Docker   |
+| Firewall / puertos               | CUMPLE   | docker/firewall/REGLAS-FIREWALL.md     |
+| Prometheus                       | CUMPLE   | docker-compose.infra.yml, :9090        |
+| Grafana                          | CUMPLE   | :3000, dashboard nutrikids-overview    |
+| SSL/HTTPS                        | CUMPLE   | Railway TLS + gateway local :9443      |
+| Balanceador carga                | CUMPLE   | Nginx upstream fastapi + fastapi-b     |
+| App móvil funcional              | CUMPLE   | NutriKidsMovil, APK, Railway API       |
+| Navegación móvil                 | CUMPLE   | React Navigation, tabs padre/niño      |
+| Validación formularios           | CUMPLE   | authValidation.ts, FastAPI Pydantic, Laravel Validator |
+| Sync App↔Web                     | CUMPLE   | API única + PostgreSQL compartida      |
+| Web+API+BD en nube               | CUMPLE   | Railway desplegado                     |
+| Laravel admin JWT                | PARCIAL  | Usa sesión web (diseño intencional)    |
+| Certificado SSL local            | PARCIAL  | Autofirmado en :9443 (dev); Railway OK |
+| Firewall OS cloud                | PARCIAL  | Depende proveedor; documentado         |
+
+
+================================================================================
+DEMOSTRACIONES POR CRITERIO (qué abrir, qué hacer)
+================================================================================
+
+HASHING:
+  Pantalla: pgAdmin → nutrikids → usuarios → columna contrasena
+  Acción: mostrar hash bcrypt
+  Decir: "Nunca almacenamos la contraseña en claro"
+
+JWT:
+  Pantalla: Postman o curl + http://localhost:8000/docs
+  Acción: login → copiar token → request protegida → 401 sin token
+  Herramienta: Swagger /docs sección Authorize
+
+ARQUITECTURA PÚBLICO/PRIVADO:
+  Pantalla: docker compose ps + diagrama en este archivo sección B
+  Acción: mostrar Redis sin puerto publicado; Postgres 127.0.0.1 only
+
+PROMETHEUS/GRAFANA:
+  Pantalla: http://127.0.0.1:3000 dashboard NutriKids — Overview
+  Acción: generar tráfico API, ver gráficas actualizarse
+
+BALANCEADOR:
+  Pantalla: logs nutrikids_gateway + curl -k https://localhost:9443/health
+  Acción: detener fastapi-b, API sigue respondiendo
+
+HTTPS:
+  Pantalla: navegador → URL Railway con candado verde
+  Acción: mostrar certificado Railway; local mostrar :9443
+
+APP MÓVIL:
+  Pantalla: teléfono con NutriKids
+  Acción: login padre → hábitos → modo niño PIN
+
+SINCRONIZACIÓN:
+  Pantalla: App + pgAdmin
+  Acción: crear dato en app → ver fila en PostgreSQL
+
+FORMULARIOS:
+  Pantalla: Login Web o Register móvil
+  Acción: enviar email inválido → mensaje error; backend rechaza también
+
+
+================================================================================
+PREGUNTAS PROBABLES DE EVALUADORES
+================================================================================
+
+P: ¿Cómo protegen las contraseñas?
+R: "Usamos bcrypt con factor de costo 12. Al registrarse o iniciar sesión,
+   la contraseña se hashea o se compara contra el hash en PostgreSQL.
+   Nunca guardamos la contraseña en texto plano."
+
+P: ¿Qué es JWT y cómo lo usan?
+R: "Es un token firmado que la API entrega al login. Dura 15 minutos.
+   La app móvil lo envía en el header Authorization. Si expira, usamos
+   refresh token con rotación para obtener uno nuevo sin volver a escribir
+   la contraseña."
+
+P: ¿Dónde está la base de datos?
+R: "En PostgreSQL. En Docker está en una red privada internal sin acceso
+   desde Internet. En Railway está en la red interna del proveedor."
+
+P: ¿Cómo monitorean el sistema?
+R: "Con Prometheus recolectando métricas cada 15 segundos y Grafana
+   visualizándolas. Medimos peticiones HTTP, latencia, CPU y memoria
+   de los contenedores."
+
+P: ¿Qué hace el balanceador?
+R: "Nginx recibe las peticiones HTTPS y las reparte entre dos instancias
+   de FastAPI con least_conn. Si una cae, la otra sigue atendiendo."
+
+P: ¿La app móvil es diferente a la web?
+R: "Sí. Tiene modo niño con PIN, retos gamificados, hábitos diarios,
+   notificaciones y navegación móvil nativa. La web es informativa y
+   portal padres; la app es la experiencia interactiva del día a día."
+
+P: ¿Cómo se sincronizan app y web?
+R: "Ambas usan la misma API FastAPI y la misma base PostgreSQL.
+   Lo que guarda la app persiste en BD y puede consultarse desde
+   Laravel admin o endpoints web."
+
+P: ¿Usan HTTPS en producción?
+R: "Sí. Railway termina TLS automáticamente. La app móvil apunta a
+   https://nutrikids-sitioweb.up.railway.app"
+
+P: ¿Cómo validan formularios?
+R: "Triple capa: validación en la UI (React Native / JavaScript),
+   validación en Flask/Laravel, y validación en FastAPI con Pydantic
+   o reglas Laravel."
+
+P: ¿Qué pasa si alguien intenta muchos logins?
+R: "Rate limiting: 5 intentos por minuto por IP en login API,
+   bloqueo de cuenta tras 5 fallos, y throttle en login Laravel."
+
+
+================================================================================
+GUION SUGERIDO — 10 MINUTOS
+================================================================================
+
+[0:00-0:45] INTEGRANTE 1 — Introducción
+  "Somos NutriKids, plataforma de nutrición infantil con web, API,
+   app móvil y panel admin. Padres y niños en la app; nutriólogos
+   y administradores en Laravel."
+
+[0:45-2:00] INTEGRANTE 2 — Arquitectura
+  Mostrar diagrama sección B. Mencionar Flask + FastAPI + Laravel +
+  PostgreSQL + Redis. Railway en producción.
+
+[2:00-3:15] INTEGRANTE 3 — Seguridad
+  bcrypt en pgAdmin, JWT en Swagger, HTTPS Railway.
+
+[3:15-4:30] INTEGRANTE 4 — Monitoreo y balanceador
+  Grafana dashboard + curl gateway + explicar Nginx upstream.
+
+[4:30-6:00] INTEGRANTE 1 — App móvil
+  Demo teléfono: login padre, hábito, modo niño.
+
+[6:00-7:15] INTEGRANTE 2 — Integración App-API-BD-Web
+  Mostrar dato en app → pgAdmin → mencionar visibilidad admin.
+
+[7:15-8:30] INTEGRANTE 3 — Web en vivo
+  Flask comentarios con respuestas, login admin Laravel.
+
+[8:30-9:30] INTEGRANTE 4 — Cierre técnico
+  Recapitular checklist, repos GitHub, Docker.
+
+[9:30-10:00] TODOS — Preguntas
+  Repartir respuestas de sección Q&A.
+
+
+================================================================================
+COMANDOS RÁPIDOS
+================================================================================
+
+# Stack base (desarrollo)
+docker compose up -d
+
+# Stack exposición (gateway + monitoreo)
+powershell -ExecutionPolicy Bypass -File scripts/start-expo-stack.ps1
+
+# Migraciones
+docker compose exec fastapi alembic upgrade head
+docker compose exec laravel php artisan migrate
+
+# Credenciales demo
+  Admin:     admin@nutrikids.com / admin1234  → Laravel /admin
+  Padre:     padre@nutrikids.com / Padre123*   → Flask /portal o App
+  Nutriólogo: nutriologo@nutrikids.com / Nutri123*
+
+# URLs locales
+  Flask:       http://localhost:5000
+  Laravel:     http://localhost:8080
+  FastAPI docs:http://localhost:8000/docs
+  Gateway:     https://localhost:9443
+  Grafana:     http://127.0.0.1:3000
+  Prometheus:  http://127.0.0.1:9090
+  pgAdmin:     http://127.0.0.1:5050
+
+
+================================================================================
+CHECKLIST FINAL PRE-EXPOSICIÓN
+================================================================================
+
+[✓] Hashing bcrypt funcionando
+[✓] JWT /api/v1 auth login + refresh + protección endpoints
+[✓] API protegida con RBAC y rate limit
+[✓] Servidor público (Railway + gateway local)
+[✓] Servidor privado (PostgreSQL/Redis internal)
+[✓] Firewall documentado + puertos restringidos
+[✓] Prometheus configurado
+[✓] Grafana configurado con dashboard
+[✓] SSL HTTPS Railway + gateway local 9443
+[✓] Balanceador Nginx + 2 instancias FastAPI
+[✓] App móvil funcional (APK / Railway API)
+[✓] Navegación móvil padre/niño
+[✓] Validación formularios front + back
+[✓] Comunicación App → API
+[✓] API → BD
+[✓] BD → Web/admin
+[✓] Respuestas en comentarios/discusiones Web
+[✓] Variables entorno documentadas
+[✓] CORS configurado
+[✓] Migraciones Alembic + Laravel
+[✓] Intrucciones-expo.txt creado
+
+[⚠] Certificado SSL local autofirmado (aceptar excepción navegador en demo)
+[⚠] Laravel admin usa sesión, no JWT (decisión arquitectónica panel web)
+[⚠] Firewall OS del proveedor cloud: configurar en VPS si aplica
+
+
+================================================================================
+FIN — NutriKids Exposición Técnica
+================================================================================

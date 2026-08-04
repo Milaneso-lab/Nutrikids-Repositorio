@@ -1,0 +1,147 @@
+# Infraestructura de exposición: gateway HTTPS + balanceador + monitoreo
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.infra.yml --profile gateway --profile monitoring up -d
+
+services:
+  fastapi-b:
+    profiles: ["gateway"]
+    build:
+      context: .
+      dockerfile: Dockerfile.fastapi
+    container_name: nutrikids_fastapi_b
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request as u; u.urlopen('http://127.0.0.1:8000/health').read()\"",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    env_file:
+      - .env
+      - fastapi/.env
+    environment:
+      NUTRIKIDS_DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-nutrikids_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-nutrikids}
+      NUTRIKIDS_REDIS_URL: redis://redis:6379/0
+      NUTRIKIDS_SKIP_CREATE_ALL: "1"
+      NUTRIKIDS_ACCESS_TOKEN_MINUTES: "15"
+      NUTRIKIDS_CORS_ORIGINS: "http://localhost:5000,http://127.0.0.1:5000,http://localhost:8080,http://127.0.0.1:8080,https://localhost:9443"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./fastapi:/app
+    networks:
+      - app-network
+      - private-network
+
+  nginx-gateway:
+    profiles: ["gateway"]
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    container_name: nutrikids_gateway
+    ports:
+      - "9080:80"
+      - "9443:443"
+    depends_on:
+      fastapi:
+        condition: service_healthy
+      fastapi-b:
+        condition: service_healthy
+      flask:
+        condition: service_healthy
+      laravel:
+        condition: service_started
+    networks:
+      - app-network
+
+  nginx-exporter:
+    profiles: ["monitoring"]
+    image: nginx/nginx-prometheus-exporter:1.3.0
+    container_name: nutrikids_nginx_exporter
+    command:
+      - -nginx.scrape-uri=http://nginx-gateway/nginx-status
+    depends_on:
+      - nginx-gateway
+    networks:
+      - app-network
+
+  prometheus:
+    profiles: ["monitoring"]
+    image: prom/prometheus:v2.54.1
+    container_name: nutrikids_prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    networks:
+      - app-network
+
+  grafana:
+    profiles: ["monitoring"]
+    image: grafana/grafana:11.2.0
+    container_name: nutrikids_grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-nutrikids_grafana}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - app-network
+
+  cadvisor:
+    profiles: ["monitoring"]
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: nutrikids_cadvisor
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - app-network
+
+  node-exporter:
+    profiles: ["monitoring"]
+    image: prom/node-exporter:v1.8.2
+    container_name: nutrikids_node_exporter
+    command:
+      - --path.rootfs=/host
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - app-network
+
+  postgres-exporter:
+    profiles: ["monitoring"]
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: nutrikids_postgres_exporter
+    environment:
+      DATA_SOURCE_NAME: postgresql://${POSTGRES_USER:-nutrikids_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-nutrikids}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+      - private-network
+
+volumes:
+  prometheus_data:
+  grafana_data:

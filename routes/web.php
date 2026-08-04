@@ -93,7 +93,9 @@ Route::post('/ActualizarDiscusion/{id}', [DiscusionController::class, 'update'])
 Route::post('/EliminarDiscusion/{id}', [DiscusionController::class, 'destroy'])->name('discusiones.destroy')->middleware('auth');
 
 // Autenticación
-Route::match(['post', 'options'], '/IniciarSesion', [AuthController::class, 'login'])->name('auth.login');
+Route::match(['post', 'options'], '/IniciarSesion', [AuthController::class, 'login'])
+    ->middleware('throttle:5,1')
+    ->name('auth.login');
 
 // Usuarios
 Route::post('/RegistrarUsuario', [UsuarioController::class, 'store'])->name('usuarios.store');

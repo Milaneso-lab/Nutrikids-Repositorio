@@ -19,7 +19,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - app-network
+      - private-network
 
   pgadmin:
     image: dpage/pgadmin4:8.14
@@ -32,7 +32,7 @@ services:
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
       PGADMIN_DISABLE_POSTFIX: "True"
     ports:
-      - "${PGADMIN_PORT:-5050}:80"
+      - "127.0.0.1:${PGADMIN_PORT:-5050}:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
       - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
@@ -47,6 +47,7 @@ services:
         condition: service_healthy
     networks:
       - app-network
+      - private-network
 
   redis:
     image: redis:7-alpine
@@ -60,7 +61,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - app-network
+      - private-network
 
   laravel:
     build:
@@ -90,6 +91,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - app-network
+      - private-network
     volumes:
       - ./storage:/var/www/html/storage
       - ./app:/var/www/html/app
@@ -102,8 +106,6 @@ services:
       - ./artisan:/var/www/html/artisan
       - ./composer.json:/var/www/html/composer.json
       - ./composer.lock:/var/www/html/composer.lock
-    networks:
-      - app-network
 
   fastapi:
     build:
@@ -148,6 +150,7 @@ services:
       - ./fastapi:/app
     networks:
       - app-network
+      - private-network
 
   flask:
     build:
@@ -189,3 +192,5 @@ volumes:
 networks:
   app-network:
     driver: bridge
+  private-network:
+    internal: true

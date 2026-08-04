@@ -13,6 +13,7 @@ from app.security.settings import security_settings
 from config import settings
 from database import Base, engine
 from routers import auth, citas, comentarios, contactos, discusiones, evaluaciones, menus, pacientes, reportes, users
+from prometheus_fastapi_instrumentator import Instrumentator
 from seed import seed_dev_users_if_missing
 
 logging.basicConfig(level=logging.INFO)
@@ -31,6 +32,12 @@ app = FastAPI(
 )
 
 register_exception_handlers(app)
+
+Instrumentator(
+    should_group_status_codes=True,
+    should_ignore_untemplated=True,
+    excluded_handlers=["/metrics", "/health"],
+).instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
 allowed_origins = [o.strip() for o in security_settings.cors_origins.split(",") if o.strip()]
 env_origins = os.getenv("NUTRIKIDS_CORS_ORIGINS", "")

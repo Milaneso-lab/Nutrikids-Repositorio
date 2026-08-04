@@ -159,7 +159,7 @@ def register_v1(payload: RegisterInV1, request: Request, service: AuthService = 
     }
 
 
-@router.post("/refresh", response_model=RefreshOutV1)
+@router.post("/refresh", response_model=RefreshOutV1, dependencies=[Depends(login_rate_limiter)])
 def refresh_v1(payload: RefreshInV1, request: Request, service: AuthService = Depends(get_auth_service)):
     return RefreshOutV1(**service.refresh(payload.refresh_token, ip=client_ip(request)))
 
@@ -264,7 +264,7 @@ def nino_update_me_v1(
     )
 
 
-@router.post("/nino/refresh", response_model=RefreshOutV1)
+@router.post("/nino/refresh", response_model=RefreshOutV1, dependencies=[Depends(login_rate_limiter)])
 def nino_refresh_v1(
     payload: NinoRefreshInV1,
     request: Request,
