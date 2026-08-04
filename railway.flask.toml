@@ -1,0 +1,9 @@
+# Configuración Railway — servicio Flask (sitio web padres)
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.flask"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

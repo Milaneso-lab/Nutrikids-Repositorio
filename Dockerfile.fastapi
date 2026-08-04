@@ -8,6 +8,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY fastapi/ /app/
 
+COPY docker/entrypoint-fastapi.sh /usr/local/bin/entrypoint-fastapi.sh
+RUN chmod +x /usr/local/bin/entrypoint-fastapi.sh
+
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/usr/local/bin/entrypoint-fastapi.sh"]

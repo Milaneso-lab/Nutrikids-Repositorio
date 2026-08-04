@@ -1,0 +1,9 @@
+# Configuración Railway — servicio FastAPI (API REST)
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.fastapi"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

@@ -1,0 +1,51 @@
+# Despliegue automático a Railway en cada push a main.
+# Requisito único: secret RAILWAY_TOKEN en GitHub (Settings → Secrets → Actions).
+# Token: Railway → Project → Settings → Tokens → Create Project Token
+
+name: Deploy Railway
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-railway-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Desplegar servicios NutriKids
+    runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verificar token Railway
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "::error::Falta el secret RAILWAY_TOKEN en GitHub. Ver docs/RAILWAY-AUTO-DEPLOY.md"
+            exit 1
+          fi
+
+      - name: Desplegar FastAPI
+        run: railway up --service "${{ vars.RAILWAY_SERVICE_FASTAPI || 'nutrikids-fastapi' }}" --ci
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Desplegar Flask (sitio web)
+        run: railway up --service "${{ vars.RAILWAY_SERVICE_FLASK || 'nutrikids-flask' }}" --ci
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Desplegar Laravel (admin)
+        run: railway up --service "${{ vars.RAILWAY_SERVICE_LARAVEL || 'nutrikids-laravel' }}" --ci
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
