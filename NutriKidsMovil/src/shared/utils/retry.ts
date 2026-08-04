@@ -15,8 +15,7 @@ export function isTransientError(error: unknown): boolean {
     normalized.code === AppErrorCode.Network ||
     normalized.code === AppErrorCode.Timeout ||
     normalized.code === AppErrorCode.Unavailable ||
-    normalized.code === AppErrorCode.Server ||
-    normalized.statusCode === 429
+    normalized.code === AppErrorCode.Server
   );
 }
 

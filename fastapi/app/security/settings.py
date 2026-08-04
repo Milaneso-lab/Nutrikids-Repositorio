@@ -53,7 +53,7 @@ class SecuritySettings(BaseSettings):
         """La app móvil genera muchas peticiones legítimas por sesión."""
         if self.environment == "development":
             return max(self.rate_limit_global_per_min, 600)
-        return max(self.rate_limit_global_per_min, 240)
+        return max(self.rate_limit_global_per_min, 600)
 
 
 security_settings = SecuritySettings()

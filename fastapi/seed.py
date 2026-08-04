@@ -38,11 +38,26 @@ DEV_USERS = [
 
 def seed_dev_users_if_missing() -> None:
     env = os.getenv("NUTRIKIDS_ENVIRONMENT", os.getenv("NUTRIKIDS_ENV", "development")).lower()
-    if env in ("production", "staging"):
-        return
     enable = os.getenv("NUTRIKIDS_ENABLE_DEV_SEED", "true" if env == "development" else "false").lower()
-    if enable not in ("1", "true", "yes"):
+    enable_explicit = enable in ("1", "true", "yes")
+
+    if env in ("production", "staging") and not enable_explicit:
+        db_probe: Session = SessionLocal()
+        try:
+            if db_probe.query(Usuario).count() > 0:
+                return
+        except Exception:
+            return
+        finally:
+            db_probe.close()
+    elif not enable_explicit:
         return
+
+    import logging
+
+    logger = logging.getLogger("nutrikids")
+    if env in ("production", "staging"):
+        logger.info("Base de datos vacía: aplicando credenciales de demostración (CredencialesSeeder)")
 
     db: Session = SessionLocal()
     try:

@@ -59,10 +59,37 @@ def get_rate_limit_backend() -> RateLimitBackend:
 
 
 def client_ip(request: Request) -> str:
+    """IP del cliente; en Railway/proxies la cabecera puede ser compartida entre usuarios."""
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[0].strip()
     return request.client.host if request.client else "unknown"
+
+
+def has_bearer_auth(request: Request) -> bool:
+    auth = request.headers.get("authorization", "")
+    return auth.startswith("Bearer ") and len(auth) > 7
+
+
+def global_rate_limit_key(request: Request) -> str:
+    """Sesiones autenticadas no comparten bucket por IP (evita 429 masivo en Railway)."""
+    if has_bearer_auth(request):
+        token = request.headers.get("authorization", "")[7:].strip()
+        # Prefijo estable del JWT sin decodificar (payload variable).
+        return f"auth:{token[:48]}"
+    return f"ip:{client_ip(request)}"
+
+
+def should_skip_global_rate_limit(request: Request) -> bool:
+    """Rutas autenticadas /api/v1/* no pasan por el límite global por IP."""
+    if not request.url.path.startswith("/api/"):
+        return True
+    if has_bearer_auth(request) and request.url.path.startswith("/api/v1/"):
+        return True
+    return False
 
 
 class RateLimiter:
@@ -87,8 +114,7 @@ class RateLimiter:
 
     def check(self, request: Request) -> bool:
         """True si la solicitud debe bloquearse por exceder el límite."""
-        ip = client_ip(request)
-        key = f"{self.prefix}:{ip}"
+        key = f"{self.prefix}:{global_rate_limit_key(request)}"
         return not get_rate_limit_backend().hit(key, self.limit, self.window_seconds)
 
 

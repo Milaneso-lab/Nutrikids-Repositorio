@@ -8,7 +8,11 @@ from sqlalchemy import text
 
 from app.api.v1.router import api_v1_router
 from app.core.handlers import register_exception_handlers
-from app.security.rate_limit import global_rate_limiter, rate_limit_json_response
+from app.security.rate_limit import (
+    global_rate_limiter,
+    rate_limit_json_response,
+    should_skip_global_rate_limit,
+)
 from app.security.settings import security_settings
 from config import settings
 from database import Base, engine
@@ -73,7 +77,11 @@ else:
 
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
-    if request.url.path.startswith("/api/") and global_rate_limiter.check(request):
+    if (
+        request.url.path.startswith("/api/")
+        and not should_skip_global_rate_limit(request)
+        and global_rate_limiter.check(request)
+    ):
         return rate_limit_json_response()
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
