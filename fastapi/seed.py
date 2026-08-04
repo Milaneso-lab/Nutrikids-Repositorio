@@ -14,7 +14,7 @@ DEV_USERS = [
         "apellido_paterno": "Sistema",
         "apellido_materno": "NutriKids",
         "email": "admin@nutrikids.com",
-        "contrasena": "Admin123*",
+        "contrasena": "admin1234",
         "rol": "admin",
     },
     {

@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   label: {},
   input: {
     minHeight: 48,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: theme.radii.md,
     paddingHorizontal: theme.spacing.md,
     fontFamily: theme.fonts.regular,

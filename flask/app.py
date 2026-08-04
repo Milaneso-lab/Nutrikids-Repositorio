@@ -489,11 +489,16 @@ def obtener_comentarios():
     try:
         r = api_get("/api/comentarios", None)
         if not r.ok:
-            return jsonify({"success": True, "comentarios": []})
+            return jsonify({"success": True, "comentarios": [], "usuario_actual": session.get("user_id"), "es_padre": session.get("rol") == "padre"})
         rows = r.json()
-        return jsonify({"success": True, "comentarios": rows if isinstance(rows, list) else []})
+        return jsonify({
+            "success": True,
+            "comentarios": rows if isinstance(rows, list) else [],
+            "usuario_actual": session.get("user_id"),
+            "es_padre": session.get("rol") == "padre",
+        })
     except requests.RequestException:
-        return jsonify({"success": True, "comentarios": []})
+        return jsonify({"success": True, "comentarios": [], "usuario_actual": session.get("user_id"), "es_padre": session.get("rol") == "padre"})
 
 
 @app.route("/InsertarComentario", methods=["POST"])
@@ -503,17 +508,20 @@ def insertar_comentario():
         return jsonify({"success": False, "message": "Debes iniciar sesión como padre para publicar comentarios."}), 401
     body = request.get_json() if request.is_json else request.form.to_dict()
     comentario = body.get("comentario", "")
+    id_padre = body.get("id_comentario_padre")
+    payload = {
+        "nombre": session.get("nombre", "Usuario"),
+        "apellido": session.get("apellido", ""),
+        "comentario": comentario,
+        "id_usuario": session.get("user_id"),
+    }
+    if id_padre:
+        try:
+            payload["id_comentario_padre"] = int(id_padre)
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "message": "Comentario padre inválido."}), 400
     try:
-        r = api_post(
-            "/api/comentarios",
-            {
-                "nombre": session.get("nombre", "Usuario"),
-                "apellido": session.get("apellido", ""),
-                "comentario": comentario,
-                "id_usuario": session.get("user_id"),
-            },
-            token=tok,
-        )
+        r = api_post("/api/comentarios", payload, token=tok)
         if r.status_code >= 400:
             body = r.json() if r.content else {}
             msg = mensaje_desde_api(body if isinstance(body, dict) else None)
@@ -578,17 +586,18 @@ def obtener_discusiones():
     try:
         r = api_get("/api/discusiones")
         if not r.ok:
-            return jsonify({"success": True, "discusiones": [], "usuario_actual": session.get("user_id")})
+            return jsonify({"success": True, "discusiones": [], "usuario_actual": session.get("user_id"), "es_padre": session.get("rol") == "padre"})
         rows = r.json()
         return jsonify(
             {
                 "success": True,
                 "discusiones": rows,
                 "usuario_actual": session.get("user_id"),
+                "es_padre": session.get("rol") == "padre",
             }
         )
     except requests.RequestException:
-        return jsonify({"success": True, "discusiones": [], "usuario_actual": session.get("user_id")})
+        return jsonify({"success": True, "discusiones": [], "usuario_actual": session.get("user_id"), "es_padre": session.get("rol") == "padre"})
 
 
 @app.route("/InsertarDiscusion", methods=["POST"])
@@ -612,6 +621,26 @@ def insertar_discusion():
             msg = mensaje_desde_api(body if isinstance(body, dict) else None)
             return jsonify({"success": False, "message": msg}), r.status_code
         return jsonify({"success": True, "message": "¡Discusión creada exitosamente!", "discusion": r.json()})
+    except requests.RequestException:
+        return jsonify({"success": False, "message": GENERIC_ERROR}), 500
+
+
+@app.route("/InsertarRespuestaDiscusion/<int:did>", methods=["POST"])
+def insertar_respuesta_discusion(did):
+    tok = session.get("token")
+    if session.get("rol") != "padre" or not tok:
+        return jsonify({"success": False, "message": "Debes iniciar sesión como padre para responder."}), 401
+    data = request.get_json() if request.is_json else request.form.to_dict()
+    mensaje = (data.get("mensaje") or "").strip()
+    if len(mensaje) < 5:
+        return jsonify({"success": False, "message": "La respuesta debe tener al menos 5 caracteres."}), 400
+    try:
+        r = api_post(f"/api/discusiones/{did}/respuestas", {"mensaje": mensaje}, token=tok)
+        if r.status_code >= 400:
+            body = r.json() if r.content else {}
+            msg = mensaje_desde_api(body if isinstance(body, dict) else None)
+            return jsonify({"success": False, "message": msg}), r.status_code
+        return jsonify({"success": True, "message": "¡Respuesta publicada!", "respuesta": r.json()})
     except requests.RequestException:
         return jsonify({"success": False, "message": GENERIC_ERROR}), 500
 

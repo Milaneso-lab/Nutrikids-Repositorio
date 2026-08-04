@@ -58,11 +58,28 @@ class ComentarioIn(BaseModel):
     apellido: str
     comentario: str
     id_usuario: int | None = None
+    id_comentario_padre: int | None = None
 
 
 class ComentarioOut(ComentarioIn):
     id_comentario: int
     fecha_comentario: datetime
+    respuestas: list["ComentarioOut"] = []
+
+    model_config = {"from_attributes": True}
+
+
+class RespuestaDiscusionIn(BaseModel):
+    mensaje: str
+
+
+class RespuestaDiscusionOut(RespuestaDiscusionIn):
+    id_respuesta: int
+    id_discusion: int
+    id_usuario: int
+    nombre: str
+    apellido: str
+    fecha_creacion: datetime
 
     model_config = {"from_attributes": True}
 
@@ -76,6 +93,7 @@ class DiscusionIn(BaseModel):
 class DiscusionOut(DiscusionIn):
     id_discusion: int
     fecha_creacion: datetime
+    respuestas: list[RespuestaDiscusionOut] = []
 
     model_config = {"from_attributes": True}
 
@@ -159,3 +177,6 @@ class CitaAsignarIn(BaseModel):
 
 class CitaEstadoIn(BaseModel):
     estado: Literal["pendiente", "asignada", "confirmada", "cancelada"]
+
+
+ComentarioOut.model_rebuild()

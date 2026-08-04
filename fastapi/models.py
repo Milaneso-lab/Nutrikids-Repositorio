@@ -19,7 +19,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
 
@@ -140,10 +140,45 @@ class Comentario(Base):
         ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),
         nullable=True,
     )
+    id_comentario_padre: Mapped[int | None] = mapped_column(
+        ForeignKey("comentarios.id_comentario", ondelete="CASCADE"),
+        nullable=True,
+    )
     nombre: Mapped[str] = mapped_column(String(50), nullable=False)
     apellido: Mapped[str] = mapped_column(String(50), nullable=False)
     comentario: Mapped[str] = mapped_column(Text, nullable=False)
     fecha_comentario: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    respuestas: Mapped[list["Comentario"]] = relationship(
+        "Comentario",
+        back_populates="padre",
+        foreign_keys="Comentario.id_comentario_padre",
+        cascade="all, delete-orphan",
+    )
+    padre: Mapped["Comentario | None"] = relationship(
+        "Comentario",
+        back_populates="respuestas",
+        remote_side=[id_comentario],
+        foreign_keys=[id_comentario_padre],
+    )
+
+
+class RespuestaDiscusion(Base):
+    __tablename__ = "respuestas_discusion"
+
+    id_respuesta: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id_discusion: Mapped[int] = mapped_column(
+        ForeignKey("discusiones.id_discusion", ondelete="CASCADE"),
+        nullable=False,
+    )
+    id_usuario: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),
+        nullable=False,
+    )
+    nombre: Mapped[str] = mapped_column(String(50), nullable=False)
+    apellido: Mapped[str] = mapped_column(String(50), nullable=False)
+    mensaje: Mapped[str] = mapped_column(Text, nullable=False)
+    fecha_creacion: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
 
 class Discusion(Base):
@@ -157,6 +192,13 @@ class Discusion(Base):
     tema: Mapped[str] = mapped_column(String(255), nullable=False)
     descripcion: Mapped[str] = mapped_column(Text, nullable=False)
     fecha_creacion: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    respuestas: Mapped[list["RespuestaDiscusion"]] = relationship(
+        "RespuestaDiscusion",
+        backref="discusion",
+        cascade="all, delete-orphan",
+        order_by="RespuestaDiscusion.fecha_creacion",
+    )
 
 
 # --- Clínico (nutriólogo / admin vía API + Laravel) ---

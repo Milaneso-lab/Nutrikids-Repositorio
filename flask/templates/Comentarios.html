@@ -226,6 +226,92 @@
         button:hover {
             background-color: var(--primary-dark);
         }
+
+        .respuestas-list {
+            margin-top: 12px;
+            padding-left: 14px;
+            border-left: 3px solid var(--primary-color, #43A047);
+        }
+
+        .respuesta-item {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+
+        .respuesta-item h5 {
+            margin: 0 0 4px;
+            font-size: 14px;
+            color: #0f172a;
+        }
+
+        .respuesta-item h5 span {
+            font-weight: normal;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .respuesta-item p {
+            margin: 0;
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.45;
+        }
+
+        .btn-responder {
+            background: transparent;
+            border: 1px solid var(--primary-color, #43A047);
+            color: var(--primary-color, #43A047);
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        .btn-responder:hover {
+            background: rgba(67, 160, 71, 0.08);
+        }
+
+        .form-respuesta {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .form-respuesta.active {
+            display: block;
+        }
+
+        .form-respuesta textarea {
+            width: 100%;
+            min-height: 72px;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .form-respuesta-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .form-respuesta-actions button {
+            min-height: auto;
+            padding: 8px 14px;
+            font-size: 13px;
+        }
+
+        .btn-cancelar-respuesta {
+            background: #e2e8f0;
+            color: #334155;
+        }
     </style>
 </head>
 <body class="public-site">
@@ -372,6 +458,53 @@ function escapeHtml(s) {
     d.textContent = s;
     return d.innerHTML;
 }
+function formatearFecha(fechaStr) {
+    const fecha = new Date(fechaStr);
+    return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+function renderRespuestasComentario(respuestas) {
+    if (!respuestas || !respuestas.length) return '';
+    let html = '<div class="respuestas-list">';
+    respuestas.forEach(function (r) {
+        html += '<div class="respuesta-item"><h5>' + escapeHtml(r.nombre) + ' ' + escapeHtml(r.apellido) +
+            ' <span>• ' + formatearFecha(r.fecha_comentario) + '</span></h5><p>' + escapeHtml(r.comentario) + '</p></div>';
+    });
+    html += '</div>';
+    return html;
+}
+function toggleFormRespuestaComentario(id) {
+    document.querySelectorAll('.form-respuesta').forEach(function (f) {
+        if (f.id !== 'form-respuesta-' + id) f.classList.remove('active');
+    });
+    var form = document.getElementById('form-respuesta-' + id);
+    if (form) form.classList.toggle('active');
+}
+function enviarRespuestaComentario(idComentario) {
+    var textarea = document.getElementById('respuesta-texto-' + idComentario);
+    if (!textarea) return;
+    var texto = textarea.value.trim();
+    if (texto.length < 5) {
+        window.alert('La respuesta debe tener al menos 5 caracteres.');
+        return;
+    }
+    var fd = new FormData();
+    fd.append('comentario', texto);
+    fd.append('id_comentario_padre', String(idComentario));
+    fetch('/InsertarComentario', { method: 'POST', body: fd, credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.success) {
+                textarea.value = '';
+                toggleFormRespuestaComentario(idComentario);
+                cargarComentarios();
+            } else {
+                window.alert(data.message || 'No se pudo publicar la respuesta.');
+            }
+        })
+        .catch(function () {
+            window.alert('No se pudo completar la acción. Inténtalo de nuevo.');
+        });
+}
 function cargarComentarios() {
     const container = document.getElementById('comentarios-container');
     if (!container) return;
@@ -383,19 +516,33 @@ function cargarComentarios() {
                 return;
             }
             const data = res.data;
+            window.esPadreComentarios = !!data.es_padre;
             if (data.comentarios && data.comentarios.length > 0) {
                 container.innerHTML = '';
                 data.comentarios.forEach(function (comentario, index) {
-                    const fecha = new Date(comentario.fecha_comentario);
-                    const fechaFormateada = fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+                    const fechaFormateada = formatearFecha(comentario.fecha_comentario);
                     const row = document.createElement('div');
                     row.className = 'comentario';
+                    row.id = 'comentario-' + comentario.id_comentario;
+                    let acciones = '';
+                    if (data.es_padre) {
+                        acciones = '<button type="button" class="btn-responder" onclick="toggleFormRespuestaComentario(' + comentario.id_comentario + ')">Responder</button>' +
+                            '<div class="form-respuesta" id="form-respuesta-' + comentario.id_comentario + '">' +
+                            '<textarea id="respuesta-texto-' + comentario.id_comentario + '" maxlength="1000" placeholder="Escribe tu respuesta..." minlength="5"></textarea>' +
+                            '<div class="form-respuesta-actions">' +
+                            '<button type="button" onclick="enviarRespuestaComentario(' + comentario.id_comentario + ')">Publicar respuesta</button>' +
+                            '<button type="button" class="btn-cancelar-respuesta" onclick="toggleFormRespuestaComentario(' + comentario.id_comentario + ')">Cancelar</button>' +
+                            '</div></div>';
+                    }
                     row.innerHTML =
                         '<div class="comentario-info"><h4>' +
                         escapeHtml(comentario.nombre) + ' ' + escapeHtml(comentario.apellido) +
                         ' <span>• ' + fechaFormateada + '</span></h4>' +
                         '<p id="comentario-texto-' + index + '" title="Ver comentario completo"></p>' +
-                        '<button type="button" class="btn-leer-mas hidden" id="btn-leer-mas-' + index + '">Leer más</button></div>';
+                        '<button type="button" class="btn-leer-mas hidden" id="btn-leer-mas-' + index + '">Leer más</button>' +
+                        acciones +
+                        renderRespuestasComentario(comentario.respuestas || []) +
+                        '</div>';
                     container.appendChild(row);
                     document.getElementById('comentario-texto-' + index).textContent = comentario.comentario;
                 });

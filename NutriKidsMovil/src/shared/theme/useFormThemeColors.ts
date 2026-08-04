@@ -32,9 +32,9 @@ export function useFormThemeColors(): FormThemeColors {
   return {
     textSecondary: auth.textSecondary,
     accent: auth.accent,
-    inputBackground: colorScheme === 'dark' ? '#111827' : '#FFFFFF',
-    inputBorder: auth.border,
-    inputText: auth.textPrimary,
-    inputPlaceholder: colorScheme === 'dark' ? '#94A3B8' : '#64748B',
+    inputBackground: auth.inputBackground,
+    inputBorder: auth.inputBorder,
+    inputText: auth.inputText,
+    inputPlaceholder: auth.inputPlaceholder,
   };
 }

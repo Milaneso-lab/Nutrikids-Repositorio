@@ -17,7 +17,7 @@ class CredencialesSeeder extends Seeder
             'apellido_paterno' => 'Sistema',
             'apellido_materno' => 'NutriKids',
             'email' => 'admin@nutrikids.com',
-            'contrasena' => 'Admin123*',
+            'contrasena' => 'admin1234',
             'rol' => 'admin',
         ],
         [
@@ -63,7 +63,7 @@ class CredencialesSeeder extends Seeder
         }
 
         $this->command?->info('✓ Usuarios de prueba Fase 6 creados/actualizados:');
-        $this->command?->info('  admin@nutrikids.com / Admin123* (Administrador)');
+        $this->command?->info('  admin@nutrikids.com / admin1234 (Administrador)');
         $this->command?->info('  nutriologo@nutrikids.com / Nutri123* (Nutriólogo)');
         $this->command?->info('  padre@nutrikids.com / Padre123* (Padre)');
     }

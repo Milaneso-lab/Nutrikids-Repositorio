@@ -334,6 +334,72 @@
             border-radius: 8px;
             border-left: 3px solid var(--primary-color);
         }
+
+        .respuestas-discusion {
+            margin-top: 14px;
+            padding-left: 14px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .respuesta-discusion {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+
+        .respuesta-discusion strong {
+            color: #0f172a;
+            font-size: 14px;
+        }
+
+        .respuesta-discusion span {
+            color: #64748b;
+            font-size: 12px;
+            font-weight: normal;
+        }
+
+        .respuesta-discusion p {
+            margin: 6px 0 0;
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.45;
+            max-height: none;
+            cursor: default;
+        }
+
+        .btn-responder-discusion {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .form-respuesta-discusion {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .form-respuesta-discusion.active {
+            display: block;
+        }
+
+        .form-respuesta-discusion textarea {
+            width: 100%;
+            min-height: 72px;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
         
         .no-discussions {
             text-align: center;
@@ -458,11 +524,68 @@
     <script>
 const URL_ACTUALIZAR_DISCUSION = {{ url_for('actualizar_discusion', did=0)|tojson }};
 const URL_ELIMINAR_DISCUSION = {{ url_for('eliminar_discusion', did=0)|tojson }};
+const URL_RESPONDER_DISCUSION = {{ url_for('insertar_respuesta_discusion', did=0)|tojson }};
 function urlActualizarDiscusion(id) {
     return URL_ACTUALIZAR_DISCUSION.replace(/\/0$/, '/' + id);
 }
 function urlEliminarDiscusion(id) {
     return URL_ELIMINAR_DISCUSION.replace(/\/0$/, '/' + id);
+}
+function urlResponderDiscusion(id) {
+    return URL_RESPONDER_DISCUSION.replace(/\/0$/, '/' + id);
+}
+function escapeHtmlDiscusion(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+function renderRespuestasDiscusion(respuestas) {
+    if (!respuestas || !respuestas.length) return '';
+    let html = '<div class="respuestas-discusion">';
+    respuestas.forEach(function (r) {
+        const fecha = new Date(r.fecha_creacion);
+        const fechaTxt = fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        html += '<div class="respuesta-discusion"><strong>' + escapeHtmlDiscusion(r.nombre) + ' ' + escapeHtmlDiscusion(r.apellido) +
+            ' <span>• ' + fechaTxt + '</span></strong><p>' + escapeHtmlDiscusion(r.mensaje) + '</p></div>';
+    });
+    html += '</div>';
+    return html;
+}
+function toggleFormRespuestaDiscusion(id) {
+    document.querySelectorAll('.form-respuesta-discusion').forEach(function (f) {
+        if (f.id !== 'form-respuesta-discusion-' + id) f.classList.remove('active');
+    });
+    const form = document.getElementById('form-respuesta-discusion-' + id);
+    if (form) form.classList.toggle('active');
+}
+function enviarRespuestaDiscusion(idDiscusion) {
+    const textarea = document.getElementById('respuesta-discusion-texto-' + idDiscusion);
+    if (!textarea) return;
+    const mensaje = textarea.value.trim();
+    if (mensaje.length < 5) {
+        window.alert('La respuesta debe tener al menos 5 caracteres.');
+        return;
+    }
+    fetch(urlResponderDiscusion(idDiscusion), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ mensaje: mensaje }),
+        credentials: 'same-origin'
+    })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.success) {
+                textarea.value = '';
+                toggleFormRespuestaDiscusion(idDiscusion);
+                cargarDiscusiones();
+            } else {
+                window.alert(data.message || 'No se pudo publicar la respuesta.');
+            }
+        })
+        .catch(function () {
+            window.alert('No se pudo completar la acción. Inténtalo de nuevo.');
+        });
 }
 function editarDiscusion(id, index) {
     const d = window.discusionesData && window.discusionesData[index];
@@ -528,6 +651,7 @@ function cargarDiscusiones() {
                 });
                 
                 const usuarioActual = data.usuario_actual;
+                const esPadre = !!data.es_padre;
                 const esPropia = discusion.id_usuario && usuarioActual && discusion.id_usuario == usuarioActual;
                 const botonesAccion = esPropia ? `
                     <div style="margin-top: 10px; display: flex; gap: 10px;">
@@ -535,14 +659,26 @@ function cargarDiscusiones() {
                         <button class="btn-eliminar" onclick="eliminarDiscusion(${discusion.id_discusion})" style="background-color: #f44336; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Eliminar</button>
                     </div>
                 ` : '';
+                const botonResponder = esPadre ? `
+                    <button type="button" class="btn-responder-discusion" onclick="toggleFormRespuestaDiscusion(${discusion.id_discusion})">Responder</button>
+                    <div class="form-respuesta-discusion" id="form-respuesta-discusion-${discusion.id_discusion}">
+                        <textarea id="respuesta-discusion-texto-${discusion.id_discusion}" maxlength="1000" placeholder="Escribe tu opinión..." minlength="5"></textarea>
+                        <div style="display:flex;gap:8px;margin-top:8px;">
+                            <button type="button" onclick="enviarRespuestaDiscusion(${discusion.id_discusion})" style="background:var(--primary-color);color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;">Publicar respuesta</button>
+                            <button type="button" onclick="toggleFormRespuestaDiscusion(${discusion.id_discusion})" style="background:#e2e8f0;color:#334155;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;">Cancelar</button>
+                        </div>
+                    </div>
+                ` : '';
                 
                 const discussionHTML = `
                     <div class="discussion" id="discusion-${discusion.id_discusion}">
-                        <h3>${discusion.tema}</h3>
-                        <p id="discusion-descripcion-${index}" onclick="abrirModalDiscusion(${index})" title="Haz clic para ver la discusión completa">${discusion.descripcion}</p>
+                        <h3>${escapeHtmlDiscusion(discusion.tema)}</h3>
+                        <p id="discusion-descripcion-${index}" onclick="abrirModalDiscusion(${index})" title="Haz clic para ver la discusión completa">${escapeHtmlDiscusion(discusion.descripcion)}</p>
                         <button class="btn-leer-mas-discusion hidden" id="btn-leer-mas-discusion-${index}" onclick="toggleDiscusion(${index})">Leer más</button>
                         <small>Creado el: ${fechaFormateada}</small>
                         ${botonesAccion}
+                        ${botonResponder}
+                        ${renderRespuestasDiscusion(discusion.respuestas || [])}
                     </div>
                 `;
                 container.innerHTML += discussionHTML;
@@ -568,7 +704,7 @@ function cargarDiscusiones() {
 
 // Función para verificar si las discusiones son largas y necesitan el botón "leer más"
 function verificarDiscusionesLargas() {
-    const discusiones = document.querySelectorAll('.discussion p');
+    const discusiones = document.querySelectorAll('.discussion > p[id^="discusion-descripcion-"]');
     discusiones.forEach((discusion, index) => {
         const btnLeerMas = document.getElementById(`btn-leer-mas-discusion-${index}`);
         if (btnLeerMas) {
